@@ -100,6 +100,22 @@ spec:
               containerPort: 4317
             - name: otel-http
               containerPort: 4318
+          # GitHub OAuth 설정
+          env:
+            - name: GF_AUTH_GITHUB_ENABLED
+              value: "true"
+            - name: GF_AUTH_GITHUB_CLIENT_ID
+              value: "Ov23liBH6Aks2u0iOs1G"
+            - name: GF_AUTH_GITHUB_ALLOWED_ORGANIZATIONS
+              value: "bottle-note"
+            - name: GF_AUTH_GITHUB_ALLOW_SIGN_UP
+              value: "true"
+            - name: GF_SERVER_ROOT_URL
+              value: "http://grafana.dead-whale.org"
+          # Client Secret은 Secret에서 주입
+          envFrom:
+            - secretRef:
+                name: github-oauth-secret
           # 컨테이너 준비 상태 체크
           readinessProbe:
             httpGet:
