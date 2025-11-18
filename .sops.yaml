@@ -1,0 +1,9 @@
+# key
+# |  deploy | age1z9vhwpuvaapjzxyxsttusj6p36jzrwqclfytq0jf4vvwj2vy4ehs4m4c64
+# |  hgkim | age10625rt38awun7dcpgjq4jjgtem0mmxwhqckce2vhjjh3j2gvaq5s32gn0w
+
+creation_rules:
+  - path_regex: '.*'
+    age: >-
+      age10625rt38awun7dcpgjq4jjgtem0mmxwhqckce2vhjjh3j2gvaq5s32gn0w,
+      age1z9vhwpuvaapjzxyxsttusj6p36jzrwqclfytq0jf4vvwj2vy4ehs4m4c64
