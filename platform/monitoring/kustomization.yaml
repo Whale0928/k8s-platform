@@ -5,11 +5,4 @@ namespace: monitoring
 
 resources:
   - lgtm.yaml
-
-secretGenerator:
-  - name: otel-config
-    envs:
-      - otel.sops.env
-  - name: github-oauth-secret
-    envs:
-      - github-oauth.sops.env
+  - monitoring-secret.sops.yaml
