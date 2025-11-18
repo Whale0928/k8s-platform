@@ -24,6 +24,10 @@ data:
           clientSecret: $dex.github.clientSecret
           orgs:
             - name: bottle-note
+          # GitHub username을 주요 식별자로 사용
+          useLoginAsID: true
+          # 모든 organization과 team 정보 로드
+          loadAllGroups: true
 
   # Kustomize 빌드 옵션
   kustomize.buildOptions: --enable-alpha-plugins --enable-exec

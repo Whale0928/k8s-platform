@@ -32,7 +32,7 @@ data:
     g, bottle-note, role:readonly
     g, bottle-note:admins, role:bottle-note-admin
 
-    # Whale0928은 모든 프로젝트 관리 (super admin)
+    # Whale0928은 모든 프로젝트 관리 (ArgoCD 내장 role:admin 사용)
     g, Whale0928, role:admin
 
     # 다른 Organization 추가 예시 (주석)
