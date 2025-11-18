@@ -112,6 +112,12 @@ spec:
               value: "true"
             - name: GF_SERVER_ROOT_URL
               value: "http://grafana.dead-whale.org"
+            # 기본 사용자 역할: Viewer (읽기 전용)
+            - name: GF_USERS_AUTO_ASSIGN_ORG_ROLE
+              value: "Viewer"
+            # GitHub 사용자명 기반 Admin 권한 (Whale0928)
+            - name: GF_AUTH_GITHUB_ROLE_ATTRIBUTE_PATH
+              value: "login == 'Whale0928' && 'Admin' || 'Viewer'"
           # Secret에서 환경변수 주입 (GitHub OAuth + OpenTelemetry)
           envFrom:
             - secretRef:
