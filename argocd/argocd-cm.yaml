@@ -1,0 +1,29 @@
+# ArgoCD ConfigMap
+# GitHub OAuth 및 기본 설정 관리
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  url: https://argocd.dead-whale.org
+  accounts.bottlenote: apiKey,login
+
+  # GitHub OAuth 설정 (Dex)
+  dex.config: |
+    connectors:
+      - type: github
+        id: github
+        name: GitHub
+        config:
+          clientID: Ov23liw9guPIPWzDyxLE
+          clientSecret: $dex.github.clientSecret
+          orgs:
+            - name: bottle-note
+
+  # Kustomize 빌드 옵션
+  kustomize.buildOptions: --enable-alpha-plugins --enable-exec

@@ -1,0 +1,41 @@
+# ArgoCD RBAC ConfigMap
+# GitHub OAuth 사용자 권한 관리
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-rbac-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-rbac-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  # 기본 권한: 읽기 전용
+  policy.default: role:readonly
+
+  # RBAC 정책 (Organization별 Project 분리)
+  policy.csv: |
+    # readonly 역할: 기본 읽기 권한
+    p, role:readonly, applications, get, */*, allow
+    p, role:readonly, clusters, get, *, allow
+    p, role:readonly, repositories, get, *, allow
+    p, role:readonly, projects, get, *, allow
+
+    # bottle-note Organization 권한
+    # bottlenote, observability Project에 대한 모든 권한
+    p, role:bottle-note-admin, applications, *, bottlenote/*, allow
+    p, role:bottle-note-admin, applications, *, observability/*, allow
+    p, role:bottle-note-admin, projects, get, bottlenote, allow
+    p, role:bottle-note-admin, projects, get, observability, allow
+
+    # bottle-note Organization 멤버는 readonly + bottlenote Project 권한
+    g, bottle-note, role:readonly
+    g, bottle-note:admins, role:bottle-note-admin
+
+    # Whale0928은 모든 프로젝트 관리 (super admin)
+    g, Whale0928, role:admin
+
+    # 다른 Organization 추가 예시 (주석)
+    # p, role:another-org-admin, applications, *, another-org/*, allow
+    # g, another-org, role:readonly
+    # g, another-org:admins, role:another-org-admin

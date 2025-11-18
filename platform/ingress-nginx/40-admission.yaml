@@ -1,0 +1,42 @@
+# Admission Webhook 리소스
+# Ingress 리소스 생성/수정 시 유효성 검증을 수행하는 Webhook
+
+# ========================================
+# Service - Admission Webhook
+# Controller의 webhook 포트(8443)로 요청 전달
+# ========================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: ingress-nginx-controller-admission
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: ingress-nginx
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+spec:
+  type: ClusterIP
+  ports:
+  - name: https-webhook
+    port: 443
+    protocol: TCP
+    targetPort: webhook  # Controller의 8443 포트
+    appProtocol: https
+  selector:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: ingress-nginx
+    app.kubernetes.io/name: ingress-nginx
+
+# ========================================
+# 참고: Admission Webhook 인증서
+# ========================================
+# Webhook은 TLS 인증서가 필요합니다.
+# 현재 클러스터에는 이미 ingress-nginx-admission Secret이 존재합니다.
+#
+# 새로 설치하는 경우 다음 방법 중 하나를 사용:
+# 1. cert-manager로 자동 발급
+# 2. Job으로 자체 서명 인증서 생성 (ingress-nginx-admission-create, ingress-nginx-admission-patch)
+# 3. 수동으로 인증서 생성 후 Secret 배포
+#
+# ArgoCD로 이관하는 현재 상황에서는 기존 Secret을 그대로 사용합니다.
