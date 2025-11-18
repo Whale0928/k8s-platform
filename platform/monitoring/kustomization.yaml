@@ -7,4 +7,4 @@ resources:
   - lgtm.yaml
 
 generators:
-  - monitoring-secret.sops.yaml
+  - ksops-generator.yaml
