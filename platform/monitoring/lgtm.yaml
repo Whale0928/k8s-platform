@@ -95,6 +95,22 @@ spec:
         fsGroup: 472 # Grafana user ID
         runAsUser: 472
         runAsGroup: 472
+      # [추가] 본 컨테이너 시작 전에 데이터 폴더 권한을 '대개방' 해주는 해결사
+      initContainers:
+        - name: fix-permissions
+          image: busybox:latest
+          command: ["sh", "-c", "chmod -R 777 /data"]
+          volumeMounts:
+            - name: grafana-storage
+              mountPath: /data/grafana
+            - name: loki-storage
+              mountPath: /data/loki
+            - name: tempo-storage
+              mountPath: /data/tempo
+            - name: p8s-storage
+              mountPath: /data/prometheus
+            - name: pyroscope-storage
+              mountPath: /data/pyroscope
       containers:
         - name: lgtm
           image: grafana/otel-lgtm:latest
@@ -163,6 +179,8 @@ spec:
               mountPath: /data/tempo
             - name: p8s-storage
               mountPath: /data/prometheus
+            - name: pyroscope-storage
+              mountPath: /data/pyroscope
       volumes:
         # (마운트 설정은 기존 유지 - 호스트 패스)
         - name: grafana-storage
@@ -173,3 +191,5 @@ spec:
           hostPath: { path: /mnt/data/lgtm/tempo, type: DirectoryOrCreate }
         - name: p8s-storage
           hostPath: { path: /mnt/data/lgtm/prometheus, type: DirectoryOrCreate }
+        - name: pyroscope-storage
+          hostPath: { path: /mnt/data/lgtm/pyroscope, type: DirectoryOrCreate }
