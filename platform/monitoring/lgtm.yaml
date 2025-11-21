@@ -154,7 +154,7 @@ spec:
           # 리소스
           resources:
             requests: { memory: "2Gi", cpu: "1000m" }
-            limits: { memory: "8Gi", cpu: "2000m" }
+            limits: { memory: "6Gi", cpu: "2000m" }
 
           volumeMounts:
             - name: lgtm-data
