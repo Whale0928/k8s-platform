@@ -10,8 +10,16 @@ metadata:
     app.kubernetes.io/name: argocd-rbac-cm
     app.kubernetes.io/part-of: argocd
 data:
-  # 기본 권한: 없음 (Whale0928만 접근 가능)
+  # 기본 권한: 없음 (명시적 권한만 허용)
   policy.default: ''
   # RBAC 정책 (Organization별 Project 분리)
   policy.csv: |
+    # bottle-note Organization: default, bottlenote 프로젝트만 조회
+    p, role:bottle-note-viewer, applications, get, default/*, allow
+    p, role:bottle-note-viewer, applications, get, bottlenote/*, allow
+    p, role:bottle-note-viewer, projects, get, default, allow
+    p, role:bottle-note-viewer, projects, get, bottlenote, allow
+    g, bottle-note, role:bottle-note-viewer
+
+    # Whale0928: 모든 프로젝트 관리
     g, Whale0928, role:admin
