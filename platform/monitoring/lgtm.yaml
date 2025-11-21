@@ -154,7 +154,7 @@ spec:
           # 리소스
           resources:
             requests: { memory: "2Gi", cpu: "1000m" }
-            limits: { memory: "4Gi", cpu: "2000m" }
+            limits: { memory: "8Gi", cpu: "2000m" }
 
           # [수정됨] 모든 데이터를 /data 아래 임시 공간에 저장
           volumeMounts:
