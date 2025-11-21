@@ -162,4 +162,5 @@ spec:
 
       volumes:
         - name: lgtm-data
-          emptyDir: { }
+          emptyDir:
+            sizeLimit: 20Gi
