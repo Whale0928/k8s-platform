@@ -149,10 +149,6 @@ spec:
             - name: GF_AUTH_DISABLE_LOGIN_FORM
               value: "false"
 
-            - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: "http://127.0.0.1:4318"
-            - name: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
-              value: "http://127.0.0.1:4318/v1/traces"
           envFrom:
             - secretRef:
                 name: monitoring-secret
