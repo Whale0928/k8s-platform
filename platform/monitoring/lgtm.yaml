@@ -79,6 +79,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-options: Validate=false
 spec:
+  replicas: 1
   strategy:
     type: Recreate
   selector:
@@ -89,28 +90,6 @@ spec:
       labels:
         app: lgtm
     spec:
-      securityContext:
-        fsGroup: 472
-        runAsUser: 472
-        runAsGroup: 472
-      initContainers:
-        - name: fix-permissions
-          image: busybox:latest
-          securityContext:
-            runAsUser: 0
-            runAsGroup: 0
-          command: [ "sh", "-c", "chmod -R 777 /data" ]
-          volumeMounts:
-            - name: grafana-storage
-              mountPath: /data/grafana
-            - name: loki-storage
-              mountPath: /data/loki
-            - name: tempo-storage
-              mountPath: /data/tempo
-            - name: p8s-storage
-              mountPath: /data/prometheus
-            - name: pyroscope-storage
-              mountPath: /data/pyroscope
       containers:
         - name: lgtm
           image: grafana/otel-lgtm:latest
@@ -124,16 +103,27 @@ spec:
               value: "true"
             - name: ENABLE_LOGS_GRAFANA
               value: "true"
-            - name: ENABLE_LOGS_PROMETHEUS
-              value: "true"
-            - name: ENABLE_LOGS_LOKI
-              value: "true"
-            - name: ENABLE_LOGS_TEMPO
-              value: "true"
-#            - name: GF_AUTH_ANONYMOUS_ENABLED
-#              value: "false"
+
             - name: GF_SERVER_ROOT_URL
-              value: "https://grafana.dead-whale.org" # https로 변경 (Ingress TLS 사용 시)
+              value: "https://grafana.dead-whale.org"
+
+            # [로그인 폼 강제 활성화] -> "Sign in with GitHub" 버튼 보이게 함
+            - name: GF_AUTH_DISABLE_LOGIN_FORM
+              value: "false"
+
+            # [자동 로그인 끄기] -> 무한 루프 방지
+            - name: GF_AUTH_OAUTH_AUTO_LOGIN
+              value: "false"
+            - name: GF_AUTH_GITHUB_AUTO_LOGIN
+              value: "false"
+            - name: GF_AUTH_ANONYMOUS_ENABLED
+              value: "false"
+
+            # [로그아웃 후 이동 경로] -> 확실하게 로그인 페이지로 보냄
+            - name: GF_AUTH_SIGNOUT_REDIRECT_URL
+              value: "https://grafana.dead-whale.org/login"
+
+            # --- GitHub OAuth 정보 ---
             - name: GF_AUTH_GITHUB_ENABLED
               value: "true"
             - name: GF_AUTH_GITHUB_CLIENT_ID
@@ -143,49 +133,35 @@ spec:
             - name: GF_AUTH_GITHUB_ROLE_ATTRIBUTE_PATH
               value: "[login=='Whale0928'][0] && 'Admin' || 'Viewer'"
 
+            # --- 네트워크 설정 (내부 통신 강제) ---
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://127.0.0.1:4318"
 
           envFrom:
             - secretRef:
                 name: monitoring-secret
+
+          # 헬스 체크
           readinessProbe:
-            httpGet:
-              path: /api/health
-              port: 3000
-            initialDelaySeconds: 60
+            httpGet: { path: /api/health, port: 3000 }
+            initialDelaySeconds: 30
             periodSeconds: 10
-            failureThreshold: 5
           livenessProbe:
-            httpGet:
-              path: /api/health
-              port: 3000
-            initialDelaySeconds: 120
+            httpGet: { path: /api/health, port: 3000 }
+            initialDelaySeconds: 60
             periodSeconds: 20
+
+          # 리소스
           resources:
-            requests:
-              memory: "2Gi"
-              cpu: "1000m"
-            limits:
-              memory: "4Gi"
-              cpu: "2000m"
+            requests: { memory: "2Gi", cpu: "1000m" }
+            limits: { memory: "4Gi", cpu: "2000m" }
+
+          # [수정됨] 모든 데이터를 /data 아래 임시 공간에 저장
           volumeMounts:
-            - name: grafana-storage
-              mountPath: /data/grafana
-            - name: loki-storage
-              mountPath: /data/loki
-            - name: tempo-storage
-              mountPath: /data/tempo
-            - name: p8s-storage
-              mountPath: /data/prometheus
-            - name: pyroscope-storage
-              mountPath: /data/pyroscope
+            - name: lgtm-data
+              mountPath: /data
+
       volumes:
-        - name: grafana-storage
-          hostPath: { path: /mnt/data/lgtm/grafana, type: DirectoryOrCreate }
-        - name: loki-storage
-          hostPath: { path: /mnt/data/lgtm/loki, type: DirectoryOrCreate }
-        - name: tempo-storage
-          hostPath: { path: /mnt/data/lgtm/tempo, type: DirectoryOrCreate }
-        - name: p8s-storage
-          hostPath: { path: /mnt/data/lgtm/prometheus, type: DirectoryOrCreate }
-        - name: pyroscope-storage
-          hostPath: { path: /mnt/data/lgtm/pyroscope, type: DirectoryOrCreate }
+        # [수정됨] 재시작하면 초기화되는 임시 볼륨 (설정 꼬임 방지)
+        - name: lgtm-data
+          emptyDir: { }
