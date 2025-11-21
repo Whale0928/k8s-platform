@@ -156,12 +156,10 @@ spec:
             requests: { memory: "2Gi", cpu: "1000m" }
             limits: { memory: "8Gi", cpu: "2000m" }
 
-          # [수정됨] 모든 데이터를 /data 아래 임시 공간에 저장
           volumeMounts:
             - name: lgtm-data
               mountPath: /data
 
       volumes:
-        # [수정됨] 재시작하면 초기화되는 임시 볼륨 (설정 꼬임 방지)
         - name: lgtm-data
           emptyDir: { }
