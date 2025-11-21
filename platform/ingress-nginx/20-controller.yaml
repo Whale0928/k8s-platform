@@ -18,7 +18,7 @@ metadata:
     app.kubernetes.io/part-of: ingress-nginx
     app.kubernetes.io/version: 1.8.1
 spec:
-  replicas: 3  # 고가용성: 3개 노드에 분산 배포
+  replicas: 4  # 고가용성: 3개 노드에 분산 배포
   revisionHistoryLimit: 10
   selector:
     matchLabels:
