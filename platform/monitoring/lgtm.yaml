@@ -100,7 +100,6 @@ spec:
               containerPort: 4317
             - name: otel-http
               containerPort: 4318
-          # GitHub OAuth 설정
           env:
             - name: GF_AUTH_GITHUB_ENABLED
               value: "true"
@@ -121,11 +120,12 @@ spec:
             # Grafana 상세 로그 활성화
             - name: ENABLE_LOGS_GRAFANA
               value: "true"
-          # Secret에서 환경변수 주입 (GitHub OAuth + OpenTelemetry)
+            # Anonymous 접근 비활성화 (GitHub OAuth 로그인 필수)
+            - name: GF_AUTH_ANONYMOUS_ENABLED
+              value: "false"
           envFrom:
             - secretRef:
                 name: monitoring-secret
-          # 컨테이너 준비 상태 체크
           readinessProbe:
             httpGet:
               path: /api/health
