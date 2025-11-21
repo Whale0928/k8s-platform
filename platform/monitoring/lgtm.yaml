@@ -99,7 +99,7 @@ spec:
           securityContext:
             runAsUser: 0
             runAsGroup: 0
-          command: ["sh", "-c", "chmod -R 777 /data"]
+          command: [ "sh", "-c", "chmod -R 777 /data" ]
           volumeMounts:
             - name: grafana-storage
               mountPath: /data/grafana
@@ -144,6 +144,10 @@ spec:
               value: "[login=='Whale0928'][0] && 'Admin' || 'Viewer'"
             - name: GF_AUTH_GITHUB_AUTO_LOGIN
               value: "false"
+            - name: GF_AUTH_OAUTH_AUTO_LOGIN
+              value: "false"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://127.0.0.1:4318"
           envFrom:
             - secretRef:
                 name: monitoring-secret
