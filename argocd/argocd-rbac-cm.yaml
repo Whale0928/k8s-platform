@@ -19,7 +19,7 @@ data:
     p, role:bottle-note-viewer, applications, get, bottlenote/*, allow
     p, role:bottle-note-viewer, projects, get, default, allow
     p, role:bottle-note-viewer, projects, get, bottlenote, allow
-    g, bottle-note, role:bottle-note-viewer
+    g, bottle-note:members, role:bottle-note-viewer
 
     # Whale0928: 모든 프로젝트 관리
     g, Whale0928, role:admin
