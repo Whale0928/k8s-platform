@@ -85,6 +85,8 @@ spec:
       labels:
         app: lgtm
     spec:
+      nodeSelector:
+        node-role.kubernetes.io/platform: platform
       containers:
         - name: lgtm
           image: grafana/otel-lgtm:latest
@@ -131,7 +133,6 @@ spec:
             # --- 네트워크 설정 (내부 통신 강제) ---
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: "http://127.0.0.1:4318"
-
           envFrom:
             - secretRef:
                 name: monitoring-secret
