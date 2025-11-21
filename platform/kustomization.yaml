@@ -5,3 +5,4 @@ resources:
   - cert-manager
   - ingress-nginx
   - monitoring
+  - external-secrets
