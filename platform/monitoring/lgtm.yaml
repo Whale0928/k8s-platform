@@ -142,6 +142,8 @@ spec:
               value: "bottle-note"
             - name: GF_AUTH_GITHUB_ROLE_ATTRIBUTE_PATH
               value: "[login=='Whale0928'][0] && 'Admin' || 'Viewer'"
+            - name: GF_AUTH_GITHUB_AUTO_LOGIN
+              value: "false"
           envFrom:
             - secretRef:
                 name: monitoring-secret
