@@ -77,11 +77,10 @@ metadata:
   name: lgtm
   namespace: monitoring
   annotations:
-    # ArgoCD가 헬스 체크를 너무 빨리 포기하지 않도록 설정
     argocd.argoproj.io/sync-options: Validate=false
 spec:
   strategy:
-    type: Recreate # PVC 연결 문제 방지를 위해 롤링 업데이트 대신 재생성 권장
+    type: Recreate
   selector:
     matchLabels:
       app: lgtm
@@ -90,12 +89,10 @@ spec:
       labels:
         app: lgtm
     spec:
-      # [중요] 권한 문제 방지를 위한 보안 컨텍스트 (K3s 환경 대응)
       securityContext:
-        fsGroup: 472 # Grafana user ID
+        fsGroup: 472
         runAsUser: 472
         runAsGroup: 472
-      # [추가] 본 컨테이너 시작 전에 데이터 폴더 권한을 '대개방' 해주는 해결사
       initContainers:
         - name: fix-permissions
           image: busybox:latest
@@ -114,14 +111,12 @@ spec:
       containers:
         - name: lgtm
           image: grafana/otel-lgtm:latest
-          imagePullPolicy: Always # 개발용 이미지라 latest가 자주 바뀌니 Always 권장
+          imagePullPolicy: Always
           ports:
             - containerPort: 3000
             - containerPort: 4317
             - containerPort: 4318
           env:
-            # --- 필수 디버깅 옵션 ---
-            # 데이터 안 들어올 때 이 로그 없으면 멘붕 옴
             - name: ENABLE_LOGS_OTELCOL
               value: "true"
             - name: ENABLE_LOGS_GRAFANA
@@ -132,7 +127,6 @@ spec:
               value: "true"
             - name: ENABLE_LOGS_TEMPO
               value: "true"
-            # --- Grafana 설정 ---
             - name: GF_AUTH_ANONYMOUS_ENABLED
               value: "false"
             - name: GF_SERVER_ROOT_URL
@@ -148,13 +142,11 @@ spec:
           envFrom:
             - secretRef:
                 name: monitoring-secret
-          # [중요] ArgoCD가 "Healthy"라고 판단하는 기준점
-          # 단순히 포트 열림(tcpSocket)이 아니라 실제 API 응답을 확인해야 함
           readinessProbe:
             httpGet:
               path: /api/health
               port: 3000
-            initialDelaySeconds: 60 # 프로세스 5개 뜨느라 오래 걸림. 넉넉히 줄 것
+            initialDelaySeconds: 60
             periodSeconds: 10
             failureThreshold: 5
           livenessProbe:
@@ -165,7 +157,7 @@ spec:
             periodSeconds: 20
           resources:
             requests:
-              memory: "2Gi" # 이거보다 적으면 OOM으로 죽을 확률 90%
+              memory: "2Gi"
               cpu: "1000m"
             limits:
               memory: "4Gi"
@@ -182,7 +174,6 @@ spec:
             - name: pyroscope-storage
               mountPath: /data/pyroscope
       volumes:
-        # (마운트 설정은 기존 유지 - 호스트 패스)
         - name: grafana-storage
           hostPath: { path: /mnt/data/lgtm/grafana, type: DirectoryOrCreate }
         - name: loki-storage
