@@ -118,6 +118,12 @@ spec:
             # GitHub 사용자명 기반 Admin 권한 (Whale0928)
             - name: GF_AUTH_GITHUB_ROLE_ATTRIBUTE_PATH
               value: "[login=='Whale0928'][0] && 'Admin' || 'Viewer'"
+            # Anonymous 접근 비활성화 테스트
+            - name: GF_AUTH_ANONYMOUS_ENABLED
+              value: "false"
+            # Grafana 상세 로그 활성화
+            - name: ENABLE_LOGS_GRAFANA
+              value: "true"
           # Secret에서 환경변수 주입 (GitHub OAuth + OpenTelemetry)
           envFrom:
             - secretRef:
