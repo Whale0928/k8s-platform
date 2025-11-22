@@ -87,6 +87,32 @@ spec:
     spec:
       nodeSelector:
         node-role.kubernetes.io/platform: platform
+
+      # Pod 시작 전 기존 데이터 정리 (emptyDir 효과)
+      initContainers:
+        - name: cleanup-old-data
+          image: alpine:latest
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+          command:
+            - sh
+            - -c
+            - |
+              echo "=== Cleaning up old LGTM data ==="
+              echo "Before cleanup:"
+              du -sh /data/* 2>/dev/null || echo "No data found"
+
+              # 데이터 삭제
+              rm -rf /data/prometheus/* /data/loki/* /data/tempo/* /data/pyroscope/* /data/grafana/grafana.db
+
+              echo "After cleanup:"
+              du -sh /data/* 2>/dev/null || echo "Cleanup completed"
+              echo "=== Starting fresh ==="
+          volumeMounts:
+            - name: lgtm-data
+              mountPath: /data
+
       containers:
         - name: lgtm
           image: grafana/otel-lgtm:latest
@@ -150,7 +176,7 @@ spec:
           # 리소스
           resources:
             requests: { memory: "2Gi", cpu: "1000m" }
-            limits: { memory: "10Gi", cpu: "3000m" }
+            limits: { memory: "10Gi", cpu: "4000m" }
 
           volumeMounts:
             - name: lgtm-data
