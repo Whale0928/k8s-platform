@@ -74,7 +74,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-options: Validate=false
 spec:
-  replicas: 1
+  replicas: 0 # 메모리 문제 해결 전까지 일시적으로 0으로 설정
   strategy:
     type: Recreate
   selector:
