@@ -158,5 +158,6 @@ spec:
 
       volumes:
         - name: lgtm-data
-          emptyDir:
-            sizeLimit: 20Gi
+          hostPath:
+            path: /mnt/data/lgtm
+            type: DirectoryOrCreate
