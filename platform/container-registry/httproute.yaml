@@ -1,5 +1,5 @@
 # HTTPRoute for Zot Container Registry
-# docker-registry.bottle-note.com -> zot:5000
+# 두 서비스가 같은 이미지 저장소 사용
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -9,9 +9,9 @@ spec:
   parentRefs:
     - name: main-gateway
       namespace: envoy-gateway-system
-      sectionName: https
   hostnames:
     - docker-registry.bottle-note.com
+    - docker-registry.kr-filter.com
   rules:
     - matches:
         - path:

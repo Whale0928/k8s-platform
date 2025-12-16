@@ -12,3 +12,4 @@ spec:
     kind: ClusterIssuer
   dnsNames:
     - docker-registry.bottle-note.com
+    - docker-registry.kr-filter.com
