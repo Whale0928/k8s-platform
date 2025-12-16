@@ -10,6 +10,7 @@ resources:
   - namespace.yaml
   - configmap.yaml
   - zot.yaml
+  - httproute.yaml
 
 generators:
   - ksops-generator.yaml
