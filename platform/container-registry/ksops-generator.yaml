@@ -1,0 +1,13 @@
+# KSOPS Secret Generator
+# SOPS로 암호화된 시크릿 파일을 Kustomize 빌드 시 복호화하는 generator
+---
+apiVersion: viaduct.ai/v1
+kind: ksops
+metadata:
+  name: zot-secret-generator
+  annotations:
+    config.kubernetes.io/function: |
+      exec:
+        path: ksops
+files:
+  - ./zot-secret.sops.yaml

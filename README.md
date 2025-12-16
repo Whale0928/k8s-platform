@@ -4,12 +4,14 @@ Personal Kubernetes platform infrastructure for all projects.
 
 ## Components
 
-| Component     | Purpose              |
-|---------------|----------------------|
-| ArgoCD        | GitOps 배포 자동화        |
-| Ingress Nginx | 트래픽 라우팅 및 로드밸런싱      |
-| Cert-Manager  | SSL 인증서 자동 관리        |
-| Monitoring    | 통합 모니터링 (LGTM Stack) |
+| Component          | Purpose              |
+|--------------------|----------------------|
+| ArgoCD             | GitOps 배포 자동화        |
+| Ingress Nginx      | 트래픽 라우팅 및 로드밸런싱      |
+| Cert-Manager       | SSL 인증서 자동 관리        |
+| Monitoring         | 통합 모니터링 (LGTM Stack) |
+| External-Secrets   | 1Password 시크릿 동기화    |
+| Container-Registry | OCI 컨테이너 레지스트리 (Zot) |
 
 ## Structure
 
@@ -22,7 +24,9 @@ k8s-platform/
 └── platform/                # 플랫폼 인프라
     ├── cert-manager/       # SSL 인증서
     ├── ingress-nginx/      # Ingress Controller
-    └── monitoring/         # LGTM Stack
+    ├── monitoring/         # LGTM Stack
+    ├── external-secrets/   # 1Password Connect
+    └── container-registry/ # Zot OCI Registry
 ```
 
 ## Usage
