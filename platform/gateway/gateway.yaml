@@ -1,0 +1,30 @@
+# Main Gateway
+# 범용 HTTPS/HTTP 리스너 - 모든 도메인 허용
+# 각 HTTPRoute에서 hostname 지정
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: main-gateway
+  namespace: envoy-gateway-system
+spec:
+  gatewayClassName: envoy
+  listeners:
+    # HTTPS 리스너 (TLS는 HTTPRoute별로 설정)
+    - name: https
+      protocol: HTTPS
+      port: 443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: gateway-tls
+            kind: Secret
+      allowedRoutes:
+        namespaces:
+          from: All
+    # HTTP 리스너
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: All
