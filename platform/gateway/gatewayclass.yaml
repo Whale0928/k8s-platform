@@ -1,8 +1,0 @@
-# Envoy GatewayClass
-# Envoy Gateway 컨트롤러가 처리할 GatewayClass 정의
-apiVersion: gateway.networking.k8s.io/v1
-kind: GatewayClass
-metadata:
-  name: envoy
-spec:
-  controllerName: gateway.envoyproxy.io/gatewayclass-controller
