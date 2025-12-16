@@ -1,9 +1,13 @@
 # Envoy Gateway
-# Kubernetes Gateway API 구현체 - HTTPS 트래픽 처리
-# 참고: https://gateway.envoyproxy.io/docs/install/install-yaml/
+# Kubernetes Gateway API 구현체
+# https://gateway.envoyproxy.io/
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  # Envoy Gateway v1.6.1 공식 설치 매니페스트
+  # Envoy Gateway v1.6.1 (EOL: 2026/05/13)
   - https://github.com/envoyproxy/gateway/releases/download/v1.6.1/install.yaml
+  # Custom Resources
+  - gatewayclass.yaml
+  - gateway.yaml
+  - httproute-zot.yaml
