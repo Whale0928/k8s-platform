@@ -6,3 +6,4 @@ resources:
   - ingress-nginx
   # - monitoring  # lgtm 비활성화
   - external-secrets
+  - container-registry

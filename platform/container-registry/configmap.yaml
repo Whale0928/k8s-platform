@@ -1,0 +1,46 @@
+# Zot Configuration
+# Zot 레지스트리의 설정 파일 (config.json)을 정의하는 ConfigMap
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: zot-config
+  namespace: container-registry
+data:
+  config.json: |
+    {
+      "distSpecVersion": "1.1.0",
+      "storage": {
+        "rootDirectory": "/var/lib/zot",
+        "gc": true,
+        "gcDelay": "1h",
+        "gcInterval": "24h"
+      },
+      "http": {
+        "address": "0.0.0.0",
+        "port": "5000",
+        "auth": {
+          "htpasswd": {
+            "path": "/etc/zot/htpasswd"
+          }
+        }
+      },
+      "log": {
+        "level": "info"
+      },
+      "extensions": {
+        "ui": {
+          "enable": true
+        },
+        "search": {
+          "enable": true,
+          "cve": {
+            "updateInterval": "24h"
+          }
+        },
+        "scrub": {
+          "enable": true,
+          "interval": "24h"
+        }
+      }
+    }
