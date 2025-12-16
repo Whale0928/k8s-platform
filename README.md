@@ -40,3 +40,4 @@ kubectl apply -k apps/
 ## Managed Projects
 
 - [bottle-note](https://github.com/bottle-note/environment-variables)
+
