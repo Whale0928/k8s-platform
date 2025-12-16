@@ -11,3 +11,15 @@ resources:
   - gatewayclass.yaml
   - gateway.yaml
   - certificate.yaml
+
+patches:
+  # Envoy Gateway를 arm64 노드에서 실행 (외부 IP 접근 가능)
+  - target:
+      kind: Deployment
+      name: envoy-gateway
+      namespace: envoy-gateway-system
+    patch: |
+      - op: add
+        path: /spec/template/spec/nodeSelector
+        value:
+          kubernetes.io/arch: arm64
