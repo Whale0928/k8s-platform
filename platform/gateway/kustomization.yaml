@@ -10,4 +10,5 @@ resources:
   # Custom Resources
   - gatewayclass.yaml
   - gateway.yaml
+  - certificate.yaml
   - httproute-zot.yaml
