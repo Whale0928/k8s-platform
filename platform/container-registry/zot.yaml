@@ -89,3 +89,42 @@ spec:
       targetPort: 5000
       nodePort: 30500
       protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: zot
+  namespace: container-registry
+  labels:
+    app.kubernetes.io/name: zot
+    app.kubernetes.io/component: registry
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - docker-registry.bottle-note.com
+        # - docker-registry.kr-filter.com
+      secretName: zot-tls
+  rules:
+    - host: docker-registry.bottle-note.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: zot
+                port:
+                  number: 5000
+#    - host: docker-registry.kr-filter.com
+#      http:
+#        paths:
+#          - path: /
+#            pathType: Prefix
+#            backend:
+#              service:
+#                name: zot
+#                port:
+#                  number: 5000
