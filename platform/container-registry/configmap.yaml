@@ -49,6 +49,10 @@ data:
         "scrub": {
           "enable": true,
           "interval": "24h"
+        },
+        "trust": {
+          "enable": true,
+          "cosign": true
         }
       }
     }
