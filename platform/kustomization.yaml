@@ -8,3 +8,4 @@ resources:
   - external-secrets
   - container-registry
   # - gateway  # TODO: 설정 완료 후 활성화
+  - uptime-kuma
