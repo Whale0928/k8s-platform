@@ -1,6 +1,3 @@
-# ArgoCD Image Updater Deployment
-# 컨테이너 이미지 태그를 자동으로 감지하고 ArgoCD Application 업데이트
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -38,13 +35,11 @@ spec:
               containerPort: 8080
               protocol: TCP
           env:
-            # ArgoCD 인증
             - name: ARGOCD_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: argocd-image-updater-secret
                   key: argocd.token
-            # Zot Registry 인증 (통합 형식: username:password)
             - name: ZOT_CREDENTIALS
               valueFrom:
                 secretKeyRef:
