@@ -8,6 +8,7 @@ resources:
   - 10-rbac.yaml
   - 20-deployment.yaml
   - 30-configmap.yaml
+  - 40-imageupdater.yaml
 
 generators:
   - ksops-generator.yaml
