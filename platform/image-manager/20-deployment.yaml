@@ -30,12 +30,9 @@ spec:
           args:
             - run
             - --interval=5m
-            - --health-port=8080
-            - --argocd-server-addr=argocd-server.argocd
-            - --argocd-insecure=false
-            - --argocd-grpc-web=true
+            - --health-probe-bind-address=:8080
             - --registries-conf-path=/app/config/registries.conf
-            - --log-level=info
+            - --loglevel=info
           ports:
             - name: health
               containerPort: 8080
