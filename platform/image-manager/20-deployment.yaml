@@ -33,6 +33,7 @@ spec:
             - --health-probe-bind-address=:8080
             - --registries-conf-path=/app/config/registries.conf
             - --loglevel=info
+            - --leader-election=false
           ports:
             - name: health
               containerPort: 8080
