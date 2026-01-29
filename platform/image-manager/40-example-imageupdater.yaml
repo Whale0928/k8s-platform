@@ -1,0 +1,56 @@
+# ArgoCD Image Updater - ImageUpdater CR Example
+# v1.0.x uses CRD-based configuration instead of Application annotations
+#
+# This file is an EXAMPLE - customize for your applications.
+# Place your actual ImageUpdater CRs in the appropriate app namespace or
+# in a separate directory and reference them in kustomization.yaml
+#
+# Documentation: https://argocd-image-updater.readthedocs.io/en/stable/configuration/applications/
+---
+apiVersion: argocd-image-updater.argoproj.io/v1alpha1
+kind: ImageUpdater
+metadata:
+  name: bottlenote-updater
+  namespace: argocd
+spec:
+  # Namespace where ArgoCD Applications are located
+  namespace: argocd
+
+  # Global update settings (can be overridden per application or image)
+  commonUpdateSettings:
+    updateStrategy: "semver"       # semver, latest, digest, name
+    ignoreTags: ["latest", "dev", "test"]
+
+  # How to write back updates
+  writeBackConfig:
+    method: "argocd"  # "argocd" (override parameters) or "git" (commit to repo)
+    # For git write-back:
+    # method: "git"
+    # gitConfig:
+    #   branch: "main"
+    #   writeBackTarget: "kustomization:./deploy/overlays/production"
+
+  # Applications to manage
+  applicationRefs:
+    # Match bottlenote-production application
+    - namePattern: "bottlenote-production"
+      images:
+        - alias: "api"
+          imageName: "docker-registry.bottle-note.com/bottle-note/api:1.0.0"
+          commonUpdateSettings:
+            updateStrategy: "semver"
+            allowTags: "regexp:^[0-9]+\\.[0-9]+\\.[0-9]+$"
+          manifestTargets:
+            kustomize:
+              name: "docker-registry.bottle-note.com/bottle-note/api"
+
+    # Example: Match all apps with 'prod' in name
+    # - namePattern: "*-prod*"
+    #   labelSelectors:
+    #     matchLabels:
+    #       environment: "production"
+    #   images:
+    #     - alias: "app"
+    #       imageName: "docker-registry.bottle-note.com/myorg/myapp:1.0.0"
+    #       commonUpdateSettings:
+    #         updateStrategy: "digest"

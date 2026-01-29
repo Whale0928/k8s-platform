@@ -21,8 +21,8 @@ data:
       default: yes
       credentials: env:ZOT_CREDENTIALS
 
-  # 로그 레벨
-  log.level: "info"
+  # 로그 레벨 (debug for troubleshooting, info for production)
+  log.level: "debug"
 
   # ArgoCD 서버 설정
   argocd.grpc_web: "true"
