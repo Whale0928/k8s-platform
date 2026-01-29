@@ -37,6 +37,7 @@ Personal Kubernetes platform infrastructure for all projects.
 | Cert-Manager | SSL 인증서 자동 관리 | - |
 | External-Secrets | 1Password 시크릿 동기화 | amd64 |
 | Container-Registry | OCI 컨테이너 레지스트리 (Zot) | amd64 |
+| Image-Manager | 컨테이너 이미지 자동 업데이트 (ArgoCD Image Updater v1.0.2) | - |
 | Uptime Kuma | 서비스 상태 모니터링 | amd64 |
 | Monitoring | 통합 모니터링 (LGTM Stack) | 비활성화 |
 
@@ -54,6 +55,7 @@ k8s-platform/
     ├── monitoring/         # LGTM Stack (비활성화)
     ├── external-secrets/   # 1Password Connect (amd64)
     ├── container-registry/ # Zot OCI Registry (amd64)
+    ├── image-manager/      # ArgoCD Image Updater v1.0.2 (CRD 기반)
     └── uptime-kuma/        # 서비스 모니터링 (amd64)
 ```
 
