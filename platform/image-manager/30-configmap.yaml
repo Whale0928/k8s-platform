@@ -1,0 +1,36 @@
+# ArgoCD Image Updater Configuration
+# 레지스트리 설정 및 전역 옵션 정의
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-image-updater-config
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-image-updater
+    app.kubernetes.io/component: image-updater
+data:
+  # 레지스트리 설정 Zot Self-Hosted Registry (Primary)
+  registries.conf: |
+    registries:
+    - name: Zot Self-Hosted
+      prefix: docker-registry.bottle-note.com
+      api_url: https://docker-registry.bottle-note.com
+      ping: yes
+      insecure: no
+      default: yes
+      credentials: env:ZOT_CREDENTIALS
+
+  # 로그 레벨
+  log.level: "info"
+
+  # ArgoCD 서버 설정
+  argocd.grpc_web: "true"
+  argocd.server_addr: "argocd-server.argocd"
+  argocd.insecure: "false"
+  argocd.plaintext: "false"
+
+  # Git write-back 설정 (기본값)
+  # 각 Application annotation에서 개별 설정 가능
+  git.user: "argocd-image-updater"
+  git.email: "argocd-image-updater@argoproj.io"

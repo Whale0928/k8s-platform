@@ -6,6 +6,7 @@ resources:
   - ingress-nginx
   # - monitoring  # lgtm 비활성화
   - external-secrets
+  - image-manager
   - container-registry
   # - gateway  # TODO: 설정 완료 후 활성화
   - uptime-kuma
