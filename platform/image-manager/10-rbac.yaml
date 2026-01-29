@@ -15,7 +15,6 @@ metadata:
     app.kubernetes.io/name: argocd-image-updater
     app.kubernetes.io/component: image-updater
 rules:
-  # ArgoCD Application 읽기 및 업데이트
   - apiGroups:
       - argoproj.io
     resources:
@@ -26,7 +25,6 @@ rules:
       - watch
       - patch
       - update
-  # ArgoCD Application 상태 확인
   - apiGroups:
       - argoproj.io
     resources:
@@ -35,7 +33,6 @@ rules:
       - get
       - list
       - watch
-  # Secret 및 ConfigMap 읽기 (레지스트리 인증 정보)
   - apiGroups:
       - ""
     resources:
@@ -45,14 +42,12 @@ rules:
       - get
       - list
       - watch
-  # Event 생성 (디버깅용)
   - apiGroups:
       - ""
     resources:
       - events
     verbs:
       - create
-  # Leader Election을 위한 Lease 권한
   - apiGroups:
       - coordination.k8s.io
     resources:
@@ -63,7 +58,6 @@ rules:
       - create
       - update
       - patch
-  # ImageUpdater CRD 관리 (v1.0.x required)
   - apiGroups:
       - argocd-image-updater.argoproj.io
     resources:
