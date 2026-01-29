@@ -19,10 +19,10 @@ spec:
     method: "argocd"
 
   applicationRefs:
-    - namePattern: "*"
+    - namePattern: "profanity-filter"
       images:
-        - alias: "app"
-          imageName: "docker-registry.bottle-note.com/app:v0.0.1"
+        - alias: "profanity-api"
+          imageName: "docker-registry.bottle-note.com/profanity-api:v0.0.1"
           manifestTargets:
             kustomize:
-              name: "docker-registry.bottle-note.com/app"
+              name: "docker-registry.bottle-note.com/profanity-api"
