@@ -22,7 +22,7 @@ spec:
     - namePattern: "profanity-filter"
       images:
         - alias: "profanity-api"
-          imageName: "docker-registry.bottle-note.com/profanity-api:v0.0.1"
+          imageName: "docker-registry.bottle-note.com/profanity-api"
           manifestTargets:
             kustomize:
               name: "docker-registry.bottle-note.com/profanity-api"
