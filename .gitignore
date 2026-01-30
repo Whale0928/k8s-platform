@@ -58,5 +58,5 @@ CLAUDE.personal.md
 
 # macOS
 .DS_Store
-/.omc/
-*/.omc/*
+# oh-my-claudecode state (모든 위치)
+.omc/

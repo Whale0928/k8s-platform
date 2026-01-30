@@ -1,0 +1,26 @@
+# EnvoyProxy - Gateway가 동적 생성하는 Envoy Pod 설정
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: custom-proxy-config
+  namespace: envoy-gateway-system
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyDeployment:
+        replicas: 2
+        pod:
+          nodeSelector:
+            kubernetes.io/arch: arm64
+          affinity:
+            podAntiAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+                - weight: 100
+                  podAffinityTerm:
+                    labelSelector:
+                      matchLabels:
+                        app.kubernetes.io/name: envoy
+                    topologyKey: kubernetes.io/hostname
+      envoyService:
+        type: LoadBalancer

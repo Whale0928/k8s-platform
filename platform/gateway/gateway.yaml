@@ -1,0 +1,27 @@
+# Main Gateway - HTTP/HTTPS 트래픽 수신
+# 포트: 8080/8443 (ingress-nginx 충돌 방지)
+# 마이그레이션 완료 후 80/443으로 변경
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: main-gateway
+  namespace: envoy-gateway-system
+spec:
+  gatewayClassName: envoy
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 8080
+      allowedRoutes:
+        namespaces:
+          from: All
+
+    - name: https
+      protocol: HTTPS
+      port: 8443
+      tls:
+        mode: Terminate
+        certificateRefs: []
+      allowedRoutes:
+        namespaces:
+          from: All
