@@ -8,5 +8,5 @@ resources:
   - external-secrets
   - image-manager
   - container-registry
-  # - gateway  # TODO: 설정 완료 후 활성화
+  - gateway
   - uptime-kuma
