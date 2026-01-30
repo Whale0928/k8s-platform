@@ -22,9 +22,10 @@ spec:
       - http01:
           gatewayHTTPRoute:
             parentRefs:
-              - name: main-gateway
-                namespace: envoy-gateway-system
+              - group: gateway.networking.k8s.io
                 kind: Gateway
+                name: main-gateway
+                namespace: envoy-gateway-system
 
 ---
 # Production 환경 (실제 서비스용)
@@ -42,6 +43,7 @@ spec:
       - http01:
           gatewayHTTPRoute:
             parentRefs:
-              - name: main-gateway
-                namespace: envoy-gateway-system
+              - group: gateway.networking.k8s.io
                 kind: Gateway
+                name: main-gateway
+                namespace: envoy-gateway-system
