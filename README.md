@@ -30,15 +30,17 @@ Personal Kubernetes platform infrastructure for all projects.
 
 ## Components
 
-| Component | Purpose | Node Affinity |
-|-----------|---------|---------------|
-| ArgoCD | GitOps 배포 자동화 | arm64 (repo-server, redis는 amd64) |
-| Ingress Nginx | 트래픽 라우팅 및 로드밸런싱 | arm64 (Public IP 필요) |
-| Cert-Manager | SSL 인증서 자동 관리 | - |
-| External-Secrets | 1Password 시크릿 동기화 | amd64 |
-| Container-Registry | OCI 컨테이너 레지스트리 (Zot) | amd64 |
-| Uptime Kuma | 서비스 상태 모니터링 | amd64 |
-| Monitoring | 통합 모니터링 (LGTM Stack) | 비활성화 |
+| Component          | Purpose                       | Node Affinity                     |
+|--------------------|-------------------------------|-----------------------------------|
+| ArgoCD             | GitOps 배포 자동화 + Discord 알림    | arm64 (repo-server, redis는 amd64) |
+| Ingress Nginx      | 트래픽 라우팅 및 로드밸런싱               | arm64 (Public IP 필요)              |
+| Envoy Gateway      | Gateway API 기반 트래픽 관리 `[진행중]` | arm64                             |
+| Cert-Manager       | SSL 인증서 자동 관리                 | -                                 |
+| External-Secrets   | 1Password 시크릿 동기화             | amd64                             |
+| Image Updater      | 컨테이너 이미지 자동 업데이트              | amd64                             |
+| Container-Registry | OCI 컨테이너 레지스트리 (Zot)          | amd64                             |
+| Uptime Kuma        | 서비스 상태 모니터링                   | amd64                             |
+| Monitoring         | 통합 모니터링 (LGTM Stack)          | 비활성화                              |
 
 ## Structure
 
@@ -47,12 +49,14 @@ k8s-platform/
 ├── apps/                    # ArgoCD Applications
 │   ├── argocd.yaml         # ArgoCD 자체 관리
 │   └── platform.yaml       # 플랫폼 인프라 통합
-├── argocd/                  # ArgoCD 설정 (OAuth, RBAC)
+├── argocd/                  # ArgoCD 설정 (OAuth, RBAC, Notifications)
 └── platform/                # 플랫폼 인프라
     ├── cert-manager/       # SSL 인증서
     ├── ingress-nginx/      # Ingress Controller (arm64)
+    ├── gateway/            # Envoy Gateway [진행중]
     ├── monitoring/         # LGTM Stack (비활성화)
     ├── external-secrets/   # 1Password Connect (amd64)
+    ├── image-manager/      # ArgoCD Image Updater
     ├── container-registry/ # Zot OCI Registry (amd64)
     └── uptime-kuma/        # 서비스 모니터링 (amd64)
 ```
@@ -60,12 +64,16 @@ k8s-platform/
 ## Node Workload Distribution
 
 ### arm64 노드 (Oracle Cloud)
+
 - Ingress Controller (외부 트래픽 진입점)
+- Envoy Gateway (Gateway API, 8080 포트)
 - ArgoCD 핵심 컴포넌트 (server, controller)
 - 공인 IP가 필요한 서비스
 
 ### amd64 노드 (Proxmox Homelab)
+
 - ArgoCD repo-server, redis
+- ArgoCD Image Updater
 - 1Password Connect
 - Zot Container Registry
 - Uptime Kuma
