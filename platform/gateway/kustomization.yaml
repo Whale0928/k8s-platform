@@ -8,6 +8,7 @@ resources:
   - envoyproxy.yaml
   - gatewayclass.yaml
   - gateway.yaml
+  - certificate.yaml
 
 patches:
   # Envoy Gateway 컨트롤러 → arm64 노드 배치
