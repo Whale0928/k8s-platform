@@ -1,0 +1,35 @@
+# nonk8s
+# 와일드카드 인증서 (DNS-01, Cloudflare)
+# cert-manager가 자동으로 발급/갱신하여 Secret에 저장
+
+---
+# *.dead-whale.org
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard-dead-whale
+  namespace: envoy-gateway-system
+spec:
+  secretName: wildcard-dead-whale-tls
+  issuerRef:
+    name: letsencrypt-dns
+    kind: ClusterIssuer
+  dnsNames:
+    - "*.dead-whale.org"
+    - "dead-whale.org"
+
+---
+# *.kr-filter.com
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard-kr-filter
+  namespace: envoy-gateway-system
+spec:
+  secretName: wildcard-kr-filter-tls
+  issuerRef:
+    name: letsencrypt-dns
+    kind: ClusterIssuer
+  dnsNames:
+    - "*.kr-filter.com"
+    - "kr-filter.com"
