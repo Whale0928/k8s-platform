@@ -1,6 +1,6 @@
 # Main Gateway - HTTP/HTTPS 트래픽 수신
 # HTTP: 8080 (ingress-nginx 충돌 방지)
-# HTTPS: 443 (와일드카드 인증서, DNS-01)
+# HTTPS: 444 (nginx-ingress 443 충돌 방지, nginx 제거 후 443으로 변경)
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
@@ -18,7 +18,7 @@ spec:
 
     - name: https-dead-whale
       protocol: HTTPS
-      port: 443
+      port: 444
       hostname: "*.dead-whale.org"
       tls:
         mode: Terminate
@@ -30,7 +30,7 @@ spec:
 
     - name: https-kr-filter
       protocol: HTTPS
-      port: 443
+      port: 444
       hostname: "*.kr-filter.com"
       tls:
         mode: Terminate
