@@ -23,7 +23,9 @@ spec:
       tls:
         mode: Terminate
         certificateRefs:
-          - name: wildcard-dead-whale-tls
+          - group: ""
+            kind: Secret
+            name: wildcard-dead-whale-tls
       allowedRoutes:
         namespaces:
           from: All
@@ -35,7 +37,9 @@ spec:
       tls:
         mode: Terminate
         certificateRefs:
-          - name: wildcard-kr-filter-tls
+          - group: ""
+            kind: Secret
+            name: wildcard-kr-filter-tls
       allowedRoutes:
         namespaces:
           from: All
