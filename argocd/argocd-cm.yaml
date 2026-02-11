@@ -29,5 +29,17 @@ data:
           # 모든 organization과 team 정보 로드
           loadAllGroups: true
 
+  # Gateway API 리소스: envoy-gateway 컨트롤러가 server-side apply로 필드를 추가하여 OutOfSync 발생 방지
+  resource.customizations.ignoreDifferences.gateway.networking.k8s.io_Gateway: |
+    managedFieldsManagers:
+      - envoy-gateway
+    jsonPointers:
+      - /status
+  resource.customizations.ignoreDifferences.gateway.networking.k8s.io_HTTPRoute: |
+    managedFieldsManagers:
+      - envoy-gateway
+    jsonPointers:
+      - /status
+
   # Kustomize 빌드 옵션
   kustomize.buildOptions: --enable-alpha-plugins --enable-exec
