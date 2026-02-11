@@ -30,17 +30,17 @@ Personal Kubernetes platform infrastructure for all projects.
 
 ## Components
 
-| Component          | Purpose                       | Node Affinity                     |
-|--------------------|-------------------------------|-----------------------------------|
-| ArgoCD             | GitOps 배포 자동화 + Discord 알림    | arm64 (repo-server, redis는 amd64) |
-| Ingress Nginx      | 트래픽 라우팅 및 로드밸런싱               | arm64 (Public IP 필요)              |
+| Component          | Purpose                     | Node Affinity                     |
+|--------------------|-----------------------------|-----------------------------------|
+| ArgoCD             | GitOps 배포 자동화 + Discord 알림  | arm64 (repo-server, redis는 amd64) |
+| Ingress Nginx      | 트래픽 라우팅 및 로드밸런싱             | arm64 (Public IP 필요)              |
 | Envoy Gateway      | Gateway API 기반 트래픽 관리 `[진행중]` | arm64                             |
-| Cert-Manager       | SSL 인증서 자동 관리                 | -                                 |
-| External-Secrets   | 1Password 시크릿 동기화             | amd64                             |
-| Image Updater      | 컨테이너 이미지 자동 업데이트              | amd64                             |
-| Container-Registry | OCI 컨테이너 레지스트리 (Zot)          | amd64                             |
-| Uptime Kuma        | 서비스 상태 모니터링                   | amd64                             |
-| Monitoring         | 통합 모니터링 (LGTM Stack)          | 비활성화                              |
+| Cert-Manager       | SSL 인증서 자동 관리               | -                                 |
+| External-Secrets   | 1Password 시크릿 동기화           | amd64                             |
+| Image Updater      | 컨테이너 이미지 자동 업데이트            | amd64                             |
+| Container-Registry | OCI 컨테이너 레지스트리 (Zo          | amd64                             |
+| Uptime Kuma        | 서비스 상태 모니터링                 | amd64                             |
+| Monitoring         | 통합 모니터링 (LGTM Stack)        | 비활성화                              |
 
 ## Structure
 

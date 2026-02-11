@@ -1,10 +1,8 @@
 # nonk8s
-# Gateway API용 Let's Encrypt ClusterIssuer
-# cert-manager v1.14+ 필요 (ExperimentalGatewayAPISupport feature gate)
-#
-# 사용법:
-# HTTPRoute나 Certificate에서 annotation 또는 issuerRef로 참조
-#   cert-manager.io/cluster-issuer: letsencrypt-gateway
+# [Deprecated] HTTP-01 ClusterIssuer (Envoy Gateway용)
+# DNS-01 방식(dns-issuer.yaml)으로 점진적 전환 예정
+# HTTP-01은 포트 8080으로 챌린지를 받아야 해서 마이그레이션 시 제약 있음
+# 모든 서비스가 DNS-01로 전환 완료되면 이 파일 제거
 
 ---
 # Staging 환경 (테스트용 - Rate Limit 높음)

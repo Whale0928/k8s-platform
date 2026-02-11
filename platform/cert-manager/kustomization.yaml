@@ -6,8 +6,12 @@ resources:
   # cert-manager v1.16.3 (Gateway API 지원)
   - https://github.com/cert-manager/cert-manager/releases/download/v1.16.3/cert-manager.yaml
   # ClusterIssuers
-  - cluster-issuer.yaml       # NGINX Ingress용 (기존)
-  - gateway-issuer.yaml       # Gateway API용 (신규)
+  - cluster-issuer.yaml       # [Deprecated] NGINX Ingress용 HTTP-01
+  - gateway-issuer.yaml       # [Deprecated] Gateway API용 HTTP-01
+  - dns-issuer.yaml           # DNS-01 (Cloudflare, 향후 Route53 추가)
+
+generators:
+  - ksops-generator.yaml
 
 patches:
   # Gateway API feature gate 활성화
