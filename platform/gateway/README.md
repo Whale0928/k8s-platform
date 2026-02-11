@@ -1,115 +1,46 @@
-# Envoy Gateway
-
-Kubernetes Gateway API + Envoy Gateway.
-ingress-nginx와 병렬 운영으로 점진적 마이그레이션.
+# Gateway (Envoy Gateway)
 
 ## 현재 상태
 
-| 컴포넌트 | 상태 | 비고 |
+Envoy Gateway가 Gateway API(HTTPRoute) 기반으로 트래픽을 처리하며,
+nginx-ingress와 공존 중이다.
+
+| 프로토콜 | 포트 | 비고 |
 |----------|------|------|
-| Gateway | Programmed | main-gateway |
-| Envoy Proxy | 2 replicas | arm64 노드 |
-| GatewayClass | Accepted | envoy |
+| HTTP | 8080 | nginx 80 충돌 방지 |
+| HTTPS | 444 | nginx 443 충돌 방지 (임시) |
 
-## 네트워크 구성
+와일드카드 인증서는 DNS-01(Cloudflare)로 발급되며, 포트와 무관하게 갱신된다.
 
-| 서비스 | External IP | 포트 | 용도 |
-|--------|-------------|------|------|
-| ingress-nginx | 100.77.210.2, 100.88.239.24 | 80, 443 | 프로덕션 |
-| envoy-gateway | 100.77.210.2, 100.88.239.24 | 8080 | 테스트 |
+## 포트 충돌 이슈
 
-## 파일
+K3s ServiceLB는 동일 노드에서 같은 IP:port를 두 LoadBalancer 서비스가 바인딩할 수 없다.
+nginx-ingress가 80/443을 점유 중이므로 envoy는 8080/444를 사용 중이다.
+
+### 영향받는 서비스 (nginx-ingress 의존)
+
+- bottlenote
+- profanity
+- container-registry
+
+위 서비스들이 nginx Ingress 리소스를 사용 중이므로 즉시 제거 불가.
+
+## 마이그레이션 계획
+
+목표: nginx-ingress 완전 제거, envoy가 80/443을 직접 수신.
+
+1. 기존 서비스를 Ingress → HTTPRoute로 하나씩 전환
+2. 모든 서비스 전환 완료 확인
+3. nginx-ingress 제거
+4. envoy 포트 변경: 8080 → 80, 444 → 443
+5. HTTP-01 ClusterIssuer 제거 (cluster-issuer.yaml, gateway-issuer.yaml)
+
+## 파일 구성
 
 | 파일 | 설명 |
 |------|------|
-| `kustomization.yaml` | Envoy Gateway v1.2.6 + arm64 nodeSelector patch |
-| `envoyproxy.yaml` | Envoy Proxy Pod 설정 (arm64, replicas:2, anti-affinity) |
-| `gatewayclass.yaml` | GatewayClass → EnvoyProxy 연결 |
-| `gateway.yaml` | Main Gateway (HTTP 8080) |
-
-## ClusterIssuer
-
-| Issuer | 용도 | Challenge 경로 |
-|--------|------|---------------|
-| `letsencrypt-prod` | NGINX Ingress | HTTP-01 → :80 |
-| `letsencrypt-gateway` | Gateway API | HTTP-01 → :8080 |
-
-## 테스트 방법
-
-```bash
-# 1. Gateway 상태 확인
-kubectl get gateway -n envoy-gateway-system
-
-# 2. Envoy Pod 확인
-kubectl get pods -n envoy-gateway-system
-
-# 3. 서비스 IP 확인
-kubectl get svc -n envoy-gateway-system
-
-# 4. HTTPRoute 테스트 (예: uptime-kuma)
-kubectl apply -f - <<EOF
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: test-route
-  namespace: uptime-kuma
-spec:
-  parentRefs:
-  - name: main-gateway
-    namespace: envoy-gateway-system
-  hostnames:
-  - test.example.com
-  rules:
-  - backendRefs:
-    - name: uptime-kuma
-      port: 80
-EOF
-
-# 5. 테스트 요청
-curl -H "Host: test.example.com" http://100.77.210.2:8080
-```
-
-## HTTPS 활성화 (TODO)
-
-인증서 설정 후 gateway.yaml에 HTTPS 리스너 추가:
-
-```yaml
-listeners:
-  - name: https
-    protocol: HTTPS
-    port: 8443
-    tls:
-      mode: Terminate
-      certificateRefs:
-        - kind: Secret
-          name: example-tls
-          namespace: envoy-gateway-system
-    allowedRoutes:
-      namespaces:
-        from: All
-```
-
-## 마이그레이션 순서
-
-1. ✅ Gateway 설치 (8080 포트)
-2. ⬜ 테스트 서비스로 HTTPRoute 검증
-3. ⬜ HTTPS 리스너 추가 (8443)
-4. ⬜ 낮은 우선순위 서비스 전환
-5. ⬜ 프로덕션 서비스 전환
-6. ⬜ 포트 스왑 (8080→80, 8443→443)
-7. ⬜ NGINX Ingress 제거
-
-## 트러블슈팅
-
-### CRD 버전 충돌
-기존 Gateway API CRD와 Envoy Gateway CRD 버전 불일치 시:
-```bash
-kubectl delete crd backendtlspolicies.gateway.networking.k8s.io tlsroutes.gateway.networking.k8s.io
-argocd app sync platform
-```
-
-### Pod이 amd64 노드에 배치됨
-EnvoyProxy CRD의 nodeSelector 확인:
-```bash
-kubectl get envoyproxy -n envoy-gateway-system -o yaml | grep -A5 nodeSelector
-```
+| gateway.yaml | Gateway 리소스 (리스너 정의) |
+| gatewayclass.yaml | GatewayClass 정의 |
+| envoyproxy.yaml | EnvoyProxy 설정 (arm64 노드 배치 등) |
+| certificate.yaml | 와일드카드 인증서 (DNS-01, Cloudflare) |
+| kustomization.yaml | Kustomize 구성 |
