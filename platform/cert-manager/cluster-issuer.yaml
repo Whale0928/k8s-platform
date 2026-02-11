@@ -1,6 +1,8 @@
 # nonk8s
-# Let's Encrypt ClusterIssuer
-# cert-manager가 ACME 프로토콜로 인증서를 자동 발급/갱신
+# [Deprecated] HTTP-01 ClusterIssuer (Ingress NGINX용)
+# DNS-01 방식(dns-issuer.yaml)으로 점진적 전환 예정
+# 현재 bottlenote, profanity, container-registry가 letsencrypt-prod를 참조 중
+# 모든 서비스가 DNS-01로 전환 완료되면 이 파일 제거
 
 ---
 # Staging 환경 (테스트용 - Rate Limit 높음)
