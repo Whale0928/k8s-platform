@@ -7,11 +7,20 @@ metadata:
   namespace: uptime-kuma
 spec:
   parentRefs:
-  - name: main-gateway
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: main-gateway
     namespace: envoy-gateway-system
   hostnames:
   - uptime-kuma.dead-whale.org
   rules:
-  - backendRefs:
-    - name: uptime-kuma
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - group: ""
+      kind: Service
+      name: uptime-kuma
       port: 80
+      weight: 1
