@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
   - cert-manager
+  - coredns
   - ingress-nginx
   # - monitoring  # lgtm 비활성화
   - external-secrets
