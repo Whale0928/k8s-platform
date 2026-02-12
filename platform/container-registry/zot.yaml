@@ -23,7 +23,7 @@ spec:
         app.kubernetes.io/component: registry
     spec:
       nodeSelector:
-        kubernetes.io/arch: amd64
+        kubernetes.io/hostname: pve-pod-1
       containers:
         - name: zot
           image: ghcr.io/project-zot/zot-linux-amd64:v2.1.11
