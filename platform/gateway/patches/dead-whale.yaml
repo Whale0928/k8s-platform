@@ -4,7 +4,7 @@
   value:
     name: https-dead-whale
     protocol: HTTPS
-    port: 444
+    port: 443
     hostname: "*.dead-whale.org"
     tls:
       mode: Terminate

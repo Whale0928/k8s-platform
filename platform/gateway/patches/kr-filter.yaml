@@ -4,7 +4,7 @@
   value:
     name: https-kr-filter
     protocol: HTTPS
-    port: 444
+    port: 443
     hostname: "*.kr-filter.com"
     tls:
       mode: Terminate
