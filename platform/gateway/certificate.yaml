@@ -35,6 +35,21 @@ spec:
     - "kr-filter.com"
 
 ---
+# *.profanity.kr-filter.com
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard-profanity-kr-filter
+  namespace: envoy-gateway-system
+spec:
+  secretName: wildcard-profanity-kr-filter-tls
+  issuerRef:
+    name: letsencrypt-dns
+    kind: ClusterIssuer
+  dnsNames:
+    - "*.profanity.kr-filter.com"
+
+---
 # *.bottle-note.com + 루트 도메인
 apiVersion: cert-manager.io/v1
 kind: Certificate
