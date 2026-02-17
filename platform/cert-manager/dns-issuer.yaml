@@ -1,7 +1,7 @@
 # nonk8s
 # DNS-01 ClusterIssuer (Cloudflare)
 # HTTP 경로와 무관하게 DNS TXT 레코드로 도메인 소유권 검증
-# Route53(bottle-note.com)은 AWS 자격 증명 준비 후 solver 추가 예정
+# Route53(bottle-note.com) solver 추가 완료
 
 ---
 # Staging 환경 (테스트용)
@@ -25,6 +25,18 @@ spec:
           dnsZones:
             - "dead-whale.org"
             - "kr-filter.com"
+      - dns01:
+          route53:
+            region: ap-northeast-2
+            accessKeyIDSecretRef:
+              name: route53-credentials
+              key: access-key-id
+            secretAccessKeySecretRef:
+              name: route53-credentials
+              key: secret-access-key
+        selector:
+          dnsZones:
+            - "bottle-note.com"
 
 ---
 # Production 환경 (실제 서비스용)
@@ -48,3 +60,15 @@ spec:
           dnsZones:
             - "dead-whale.org"
             - "kr-filter.com"
+      - dns01:
+          route53:
+            region: ap-northeast-2
+            accessKeyIDSecretRef:
+              name: route53-credentials
+              key: access-key-id
+            secretAccessKeySecretRef:
+              name: route53-credentials
+              key: secret-access-key
+        selector:
+          dnsZones:
+            - "bottle-note.com"
