@@ -24,3 +24,5 @@ spec:
                     topologyKey: kubernetes.io/hostname
       envoyService:
         type: LoadBalancer
+        annotations:
+          svccontroller.k3s.cattle.io/lbpool: control-plane
