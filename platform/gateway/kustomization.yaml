@@ -36,4 +36,9 @@ patches:
       kind: Gateway
       name: main-gateway
       namespace: envoy-gateway-system
+    path: patches/profanity-kr-filter.yaml
+  - target:
+      kind: Gateway
+      name: main-gateway
+      namespace: envoy-gateway-system
     path: patches/bottle-note.yaml
