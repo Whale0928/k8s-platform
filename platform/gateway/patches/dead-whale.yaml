@@ -1,0 +1,17 @@
+# *.dead-whale.org 리스너
+- op: add
+  path: /spec/listeners/-
+  value:
+    name: https-dead-whale
+    protocol: HTTPS
+    port: 444
+    hostname: "*.dead-whale.org"
+    tls:
+      mode: Terminate
+      certificateRefs:
+        - group: ""
+          kind: Secret
+          name: wildcard-dead-whale-tls
+    allowedRoutes:
+      namespaces:
+        from: All

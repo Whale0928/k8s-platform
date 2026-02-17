@@ -21,3 +21,19 @@ patches:
         path: /spec/template/spec/nodeSelector
         value:
           kubernetes.io/arch: arm64
+  # 도메인별 Gateway 리스너 (주석 처리로 개별 제어 가능)
+  - target:
+      kind: Gateway
+      name: main-gateway
+      namespace: envoy-gateway-system
+    path: patches/dead-whale.yaml
+  - target:
+      kind: Gateway
+      name: main-gateway
+      namespace: envoy-gateway-system
+    path: patches/kr-filter.yaml
+  - target:
+      kind: Gateway
+      name: main-gateway
+      namespace: envoy-gateway-system
+    path: patches/bottle-note.yaml
