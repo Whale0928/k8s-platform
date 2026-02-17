@@ -1,0 +1,65 @@
+# bottle-note.com 리스너 (루트 + 와일드카드 + 서브도메인 그룹)
+- op: add
+  path: /spec/listeners/-
+  value:
+    name: https-bottle-note-root
+    protocol: HTTPS
+    port: 444
+    hostname: "bottle-note.com"
+    tls:
+      mode: Terminate
+      certificateRefs:
+        - group: ""
+          kind: Secret
+          name: wildcard-bottle-note-tls
+    allowedRoutes:
+      namespaces:
+        from: All
+- op: add
+  path: /spec/listeners/-
+  value:
+    name: https-bottle-note
+    protocol: HTTPS
+    port: 444
+    hostname: "*.bottle-note.com"
+    tls:
+      mode: Terminate
+      certificateRefs:
+        - group: ""
+          kind: Secret
+          name: wildcard-bottle-note-tls
+    allowedRoutes:
+      namespaces:
+        from: All
+- op: add
+  path: /spec/listeners/-
+  value:
+    name: https-bottle-note-dev
+    protocol: HTTPS
+    port: 444
+    hostname: "*.development.bottle-note.com"
+    tls:
+      mode: Terminate
+      certificateRefs:
+        - group: ""
+          kind: Secret
+          name: wildcard-dev-bottle-note-tls
+    allowedRoutes:
+      namespaces:
+        from: All
+- op: add
+  path: /spec/listeners/-
+  value:
+    name: https-bottle-note-product
+    protocol: HTTPS
+    port: 444
+    hostname: "*.product.bottle-note.com"
+    tls:
+      mode: Terminate
+      certificateRefs:
+        - group: ""
+          kind: Secret
+          name: wildcard-product-bottle-note-tls
+    allowedRoutes:
+      namespaces:
+        from: All
