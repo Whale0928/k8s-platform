@@ -3,4 +3,4 @@ kind: Kustomization
 
 resources:
   - uptime-kuma.yaml
-  - httproute.yaml
+  - http-route.yaml
