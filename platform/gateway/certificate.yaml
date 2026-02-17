@@ -33,3 +33,49 @@ spec:
   dnsNames:
     - "*.kr-filter.com"
     - "kr-filter.com"
+
+---
+# *.bottle-note.com + 루트 도메인
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard-bottle-note
+  namespace: envoy-gateway-system
+spec:
+  secretName: wildcard-bottle-note-tls
+  issuerRef:
+    name: letsencrypt-dns
+    kind: ClusterIssuer
+  dnsNames:
+    - "*.bottle-note.com"
+    - "bottle-note.com"
+
+---
+# *.development.bottle-note.com
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard-dev-bottle-note
+  namespace: envoy-gateway-system
+spec:
+  secretName: wildcard-dev-bottle-note-tls
+  issuerRef:
+    name: letsencrypt-dns
+    kind: ClusterIssuer
+  dnsNames:
+    - "*.development.bottle-note.com"
+
+---
+# *.product.bottle-note.com
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard-product-bottle-note
+  namespace: envoy-gateway-system
+spec:
+  secretName: wildcard-product-bottle-note-tls
+  issuerRef:
+    name: letsencrypt-dns
+    kind: ClusterIssuer
+  dnsNames:
+    - "*.product.bottle-note.com"
