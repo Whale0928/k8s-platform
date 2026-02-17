@@ -1,7 +1,6 @@
 # Main Gateway - HTTP/HTTPS 트래픽 수신
-# HTTP: 8080 (ingress-nginx 충돌 방지)
-# HTTPS: 444 (nginx-ingress 443 충돌 방지, nginx 제거 후 443으로 변경)
-# 도메인별 리스너는 patches/ 디렉토리에서 관리
+# HTTP: 80
+# HTTPS: 443 (도메인별 리스너는 patches/ 디렉토리에서 관리)
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
@@ -12,7 +11,7 @@ spec:
   listeners:
     - name: http
       protocol: HTTP
-      port: 8080
+      port: 80
       allowedRoutes:
         namespaces:
           from: All

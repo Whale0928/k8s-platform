@@ -160,7 +160,7 @@ metadata:
     app.kubernetes.io/part-of: ingress-nginx
     app.kubernetes.io/version: 1.8.1
 spec:
-  type: LoadBalancer  # K3s에서 자동으로 External IP 할당
+  type: NodePort  # svclb DaemonSet 제거, 80/443 포트 해제 (Envoy로 이관)
   externalTrafficPolicy: Local  # 클라이언트 IP 보존 (파드가 있는 노드로만 트래픽 전달)
   ipFamilyPolicy: SingleStack
   ipFamilies:
