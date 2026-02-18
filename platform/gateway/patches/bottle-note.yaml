@@ -1,27 +1,14 @@
-# bottle-note.com 리스너 (루트 + 와일드카드 + 서브도메인 그룹)
-- op: add
-  path: /spec/listeners/-
-  value:
-    name: https-bottle-note-root
-    protocol: HTTPS
-    port: 443
-    hostname: "bottle-note.com"
-    tls:
-      mode: Terminate
-      certificateRefs:
-        - group: ""
-          kind: Secret
-          name: wildcard-bottle-note-tls
-    allowedRoutes:
-      namespaces:
-        from: All
+# bottle-note.com 통합 리스너
+# hostname 생략으로 단일 filter chain 구성
+# HTTP/2 connection coalescing 시 bottle-note.com SNI로 들어온 요청이
+# development.bottle-note.com 등 다른 호스트를 요청해도 route_not_found 404가 발생하지 않음
+# 실제 라우팅은 HTTPRoute의 hostnames 필드에서 :authority 헤더 기반으로 처리
 - op: add
   path: /spec/listeners/-
   value:
     name: https-bottle-note
     protocol: HTTPS
     port: 443
-    hostname: "*.bottle-note.com"
     tls:
       mode: Terminate
       certificateRefs:
