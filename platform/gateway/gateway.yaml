@@ -1,0 +1,17 @@
+# Main Gateway - HTTP/HTTPS 트래픽 수신
+# HTTP: 80
+# HTTPS: 443 (도메인별 리스너는 patches/ 디렉토리에서 관리)
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: main-gateway
+  namespace: envoy-gateway-system
+spec:
+  gatewayClassName: envoy
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: All

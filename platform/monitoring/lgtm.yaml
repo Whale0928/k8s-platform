@@ -8,7 +8,7 @@ metadata:
 # 1. UI (3000): 사람이 브라우저로 접속 → Ingress를 통한 도메인 기반 접근 (ClusterIP)
 # 2. OTLP (4317, 4318): 애플리케이션이 텔레메트리 데이터 전송 → NodePort로 직접 접근
 # 용도가 다르므로 논리적으로 분리하여 보안성과 관리 효율성 향상
-# Grafana UI 서비스 (ClusterIP - Ingress 전용)
+# Grafana UI 서비스 (ClusterIP - HTTPRoute 전용)
 apiVersion: v1
 kind: Service
 metadata:
@@ -44,27 +44,6 @@ spec:
       port: 4318
       targetPort: 4318
       nodePort: 30318  # OpenTelemetry HTTP 수신: http://<node-ip>:30318
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: lgtm-ingress
-  namespace: monitoring
-  annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"  # HTTP 허용 (필요시 true로 변경)
-spec:
-  ingressClassName: nginx
-  rules:
-    - host: grafana.dead-whale.org
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: lgtm-ui
-                port:
-                  number: 3000
 ---
 apiVersion: apps/v1
 kind: Deployment

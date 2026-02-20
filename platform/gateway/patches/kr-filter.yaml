@@ -1,0 +1,17 @@
+# *.kr-filter.com 리스너
+- op: add
+  path: /spec/listeners/-
+  value:
+    name: https-kr-filter
+    protocol: HTTPS
+    port: 443
+    hostname: "*.kr-filter.com"
+    tls:
+      mode: Terminate
+      certificateRefs:
+        - group: ""
+          kind: Secret
+          name: wildcard-kr-filter-tls
+    allowedRoutes:
+      namespaces:
+        from: All

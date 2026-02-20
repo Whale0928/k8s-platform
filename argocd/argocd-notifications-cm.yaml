@@ -1,0 +1,122 @@
+# ArgoCD Notifications ConfigMap
+# Discord Webhook 알림 프레임워크 (서비스/템플릿/트리거)
+# Webhook URL은 각 앱이 ExternalSecret으로 argocd-notifications-secret에 주입
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-notifications-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-notifications-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  # -- 서비스 정의 --
+  # URL은 argocd-notifications-secret의 discord-webhook-url 키 참조
+  service.webhook.discord: |
+    url: $discord-webhook-url
+    headers:
+    - name: Content-Type
+      value: application/json
+
+  # -- 템플릿 (Discord Embed 포맷) --
+
+  template.app-sync-running: |
+    webhook:
+      discord:
+        method: POST
+        body: |
+          {
+            "embeds": [{
+              "title": "Sync 시작",
+              "description": "**{{.app.metadata.name}}** 배포가 시작되었습니다.",
+              "color": 3447003,
+              "fields": [
+                {"name": "Project", "value": "{{.app.spec.project}}", "inline": true},
+                {"name": "Namespace", "value": "{{.app.spec.destination.namespace}}", "inline": true},
+                {"name": "Revision", "value": "{{.app.status.operationState.syncResult.revision | truncate 7}}", "inline": true}
+              ],
+              "footer": {"text": "ArgoCD"},
+              "timestamp": "{{.app.status.operationState.startedAt}}"
+            }]
+          }
+
+  template.app-sync-succeeded: |
+    webhook:
+      discord:
+        method: POST
+        body: |
+          {
+            "embeds": [{
+              "title": "Sync 성공",
+              "description": "**{{.app.metadata.name}}** 배포가 완료되었습니다.",
+              "color": 3066993,
+              "fields": [
+                {"name": "Project", "value": "{{.app.spec.project}}", "inline": true},
+                {"name": "Namespace", "value": "{{.app.spec.destination.namespace}}", "inline": true},
+                {"name": "Revision", "value": "{{.app.status.operationState.syncResult.revision | truncate 7}}", "inline": true}
+              ],
+              "footer": {"text": "ArgoCD"},
+              "timestamp": "{{.app.status.operationState.finishedAt}}"
+            }]
+          }
+
+  template.app-sync-failed: |
+    webhook:
+      discord:
+        method: POST
+        body: |
+          {
+            "embeds": [{
+              "title": "Sync 실패",
+              "description": "**{{.app.metadata.name}}** 배포에 실패했습니다.",
+              "color": 15158332,
+              "fields": [
+                {"name": "Project", "value": "{{.app.spec.project}}", "inline": true},
+                {"name": "Namespace", "value": "{{.app.spec.destination.namespace}}", "inline": true},
+                {"name": "Phase", "value": "{{.app.status.operationState.phase}}", "inline": true},
+                {"name": "Message", "value": "{{.app.status.operationState.message}}", "inline": false}
+              ],
+              "footer": {"text": "ArgoCD"},
+              "timestamp": "{{.app.status.operationState.finishedAt}}"
+            }]
+          }
+
+  template.app-health-degraded: |
+    webhook:
+      discord:
+        method: POST
+        body: |
+          {
+            "embeds": [{
+              "title": "Health Degraded",
+              "description": "**{{.app.metadata.name}}** 서비스 상태가 비정상입니다.",
+              "color": 15105570,
+              "fields": [
+                {"name": "Project", "value": "{{.app.spec.project}}", "inline": true},
+                {"name": "Namespace", "value": "{{.app.spec.destination.namespace}}", "inline": true},
+                {"name": "Health", "value": "{{.app.status.health.status}}", "inline": true}
+              ],
+              "footer": {"text": "ArgoCD"},
+              "timestamp": "{{.app.status.operationState.finishedAt}}"
+            }]
+          }
+
+  # -- 트리거 (이벤트 조건) --
+  # defaultTriggers 없음 - 앱별 annotation으로 opt-in
+
+  trigger.on-sync-running: |
+    - when: app.status.operationState.phase in ['Running']
+      send: [app-sync-running]
+
+  trigger.on-sync-succeeded: |
+    - when: app.status.operationState.phase in ['Succeeded']
+      send: [app-sync-succeeded]
+
+  trigger.on-sync-failed: |
+    - when: app.status.operationState.phase in ['Failed', 'Error']
+      send: [app-sync-failed]
+
+  trigger.on-health-degraded: |
+    - when: app.status.health.status == 'Degraded'
+      send: [app-health-degraded]
