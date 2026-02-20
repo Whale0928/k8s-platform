@@ -1,0 +1,17 @@
+# *.profanity.kr-filter.com 리스너
+- op: add
+  path: /spec/listeners/-
+  value:
+    name: https-profanity-kr-filter
+    protocol: HTTPS
+    port: 443
+    hostname: "*.profanity.kr-filter.com"
+    tls:
+      mode: Terminate
+      certificateRefs:
+        - group: ""
+          kind: Secret
+          name: wildcard-profanity-kr-filter-tls
+    allowedRoutes:
+      namespaces:
+        from: All

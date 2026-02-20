@@ -1,0 +1,74 @@
+# nonk8s
+# DNS-01 ClusterIssuer (Cloudflare)
+# HTTP 경로와 무관하게 DNS TXT 레코드로 도메인 소유권 검증
+# Route53(bottle-note.com) solver 추가 완료
+
+---
+# Staging 환경 (테스트용)
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-dns-staging
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: rlagusrl928@gmail.com
+    privateKeySecretRef:
+      name: letsencrypt-dns-staging
+    solvers:
+      - dns01:
+          cloudflare:
+            apiTokenSecretRef:
+              name: cloudflare-api-token
+              key: api-token
+        selector:
+          dnsZones:
+            - "dead-whale.org"
+            - "kr-filter.com"
+      - dns01:
+          route53:
+            region: ap-northeast-2
+            accessKeyIDSecretRef:
+              name: route53-credentials
+              key: access-key-id
+            secretAccessKeySecretRef:
+              name: route53-credentials
+              key: secret-access-key
+        selector:
+          dnsZones:
+            - "bottle-note.com"
+
+---
+# Production 환경 (실제 서비스용)
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-dns
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: rlagusrl928@gmail.com
+    privateKeySecretRef:
+      name: letsencrypt-dns
+    solvers:
+      - dns01:
+          cloudflare:
+            apiTokenSecretRef:
+              name: cloudflare-api-token
+              key: api-token
+        selector:
+          dnsZones:
+            - "dead-whale.org"
+            - "kr-filter.com"
+      - dns01:
+          route53:
+            region: ap-northeast-2
+            accessKeyIDSecretRef:
+              name: route53-credentials
+              key: access-key-id
+            secretAccessKeySecretRef:
+              name: route53-credentials
+              key: secret-access-key
+        selector:
+          dnsZones:
+            - "bottle-note.com"
