@@ -39,7 +39,15 @@ Personal Kubernetes platform infrastructure for all projects.
 | Image Updater      | 컨테이너 이미지 자동 업데이트      | amd64                              |
 | Container-Registry | OCI 컨테이너 레지스트리 (Zot)     | amd64                              |
 | Uptime Kuma        | 서비스 상태 모니터링               | amd64                              |
+| Redis Operator     | Redis Replication/Cluster 관리   | arm64/amd64 (멀티아치)              |
 | Monitoring         | 통합 모니터링 (LGTM Stack)        | 비활성화                            |
+
+### Redis Operator 참고사항
+
+- **Opstree redis-operator v0.24.0** 기반, CRD: `RedisReplication`, `RedisCluster`, `RedisSentinel`
+- 현재 bottlenote-development에 `RedisReplication` (master 1 + replica 2) 구성
+- **Sentinel 미적용 상태**: Master Pod 장애 시 StatefulSet이 Pod를 재생성하지만 자동 failover(Replica 승격)는 되지 않음. 쓰기 불가 시간이 발생할 수 있음
+- 자동 failover가 필요하면 `RedisSentinel` CRD를 추가 배포해야 함
 
 ## Structure
 
@@ -57,7 +65,8 @@ k8s-platform/
     ├── image-manager/      # ArgoCD Image Updater
     ├── container-registry/ # Zot OCI Registry (amd64)
     ├── coredns/            # CoreDNS 설정
-    └── uptime-kuma/        # 서비스 모니터링 (amd64)
+    ├── uptime-kuma/        # 서비스 모니터링 (amd64)
+    └── redis-operator/     # Redis Operator (Opstree v0.24.0)
 ```
 
 ## Traffic Flow

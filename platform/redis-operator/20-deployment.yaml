@@ -1,0 +1,54 @@
+# Redis Operator Deployment
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-operator
+  labels:
+    control-plane: redis-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: redis-operator
+  template:
+    metadata:
+      labels:
+        control-plane: redis-operator
+    spec:
+      serviceAccountName: redis-operator
+      securityContext:
+        runAsNonRoot: true
+      terminationGracePeriodSeconds: 10
+      containers:
+        - name: manager
+          image: quay.io/opstree/redis-operator:v0.24.0
+          command: ["/operator"]
+          args:
+            - manager
+            - --leader-elect
+            - --enable-webhooks=false
+          env:
+            - name: ENABLE_WEBHOOKS
+              value: "false"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+            limits:
+              cpu: 200m
+              memory: 200Mi
+          securityContext:
+            allowPrivilegeEscalation: false
