@@ -10,3 +10,4 @@ resources:
   - container-registry
   - gateway
   - uptime-kuma
+  - redis-operator
