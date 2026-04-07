@@ -28,6 +28,7 @@ spec:
             - manager
             - --leader-elect
             - --enable-webhooks=false
+            - --feature-gates=GenerateConfigInInitContainer=true
           env:
             - name: ENABLE_WEBHOOKS
               value: "false"
