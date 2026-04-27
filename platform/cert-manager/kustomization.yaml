@@ -3,8 +3,8 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  # cert-manager v1.16.3 (Gateway API 지원)
-  - https://github.com/cert-manager/cert-manager/releases/download/v1.16.3/cert-manager.yaml
+  # cert-manager v1.16.5 (Gateway API 지원, Cloudflare DNS-01 cleanup 버그 fix 포함)
+  - https://github.com/cert-manager/cert-manager/releases/download/v1.16.5/cert-manager.yaml
   # ClusterIssuers
   - dns-issuer.yaml           # DNS-01 (Cloudflare + Route53)
 
