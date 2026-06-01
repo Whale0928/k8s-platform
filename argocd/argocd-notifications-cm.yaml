@@ -27,9 +27,6 @@ data:
       value: application/json
     - name: X-Gitlab-Token
       value: $hermes-webhook-token
-    retryWaitMin: 5s
-    retryWaitMax: 30s
-    retryMax: 5
 
   # -- 템플릿 (Discord Embed 포맷) --
 
