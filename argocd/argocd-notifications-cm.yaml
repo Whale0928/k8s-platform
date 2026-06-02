@@ -128,7 +128,6 @@ data:
             "repo_url": "{{.app.spec.source.repoURL}}",
             "path": "{{.app.spec.source.path}}",
             "namespace": "{{.app.spec.destination.namespace}}",
-            "images": "{{range $index, $image := .app.status.summary.images}}{{if $index}}, {{end}}{{$image}}{{end}}",
             "finished_at": "{{.app.status.operationState.finishedAt}}"
           }
 
