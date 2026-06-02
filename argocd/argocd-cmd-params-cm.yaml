@@ -1,5 +1,5 @@
 # ArgoCD command parameters
-# Application namespace 분리와 notification self-service 허용
+# BottleNote Application namespace 분리와 notification self-service 허용
 
 apiVersion: v1
 kind: ConfigMap
@@ -11,5 +11,5 @@ metadata:
     app.kubernetes.io/part-of: argocd
 data:
   server.insecure: "true"
-  application.namespaces: bottlenote-development
+  application.namespaces: bottlenote
   notificationscontroller.selfservice.enabled: "true"
