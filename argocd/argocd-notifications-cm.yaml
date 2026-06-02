@@ -34,7 +34,7 @@ data:
               "fields": [
                 {"name": "Project", "value": "{{.app.spec.project}}", "inline": true},
                 {"name": "Namespace", "value": "{{.app.spec.destination.namespace}}", "inline": true},
-                {"name": "Revision", "value": "{{.app.status.operationState.syncResult.revision | truncate 7}}", "inline": true}
+                {"name": "Revision", "value": "{{.app.status.operationState.syncResult.revision}}", "inline": true}
               ],
               "footer": {"text": "ArgoCD"},
               "timestamp": "{{.app.status.operationState.startedAt}}"
@@ -54,7 +54,7 @@ data:
               "fields": [
                 {"name": "Project", "value": "{{.app.spec.project}}", "inline": true},
                 {"name": "Namespace", "value": "{{.app.spec.destination.namespace}}", "inline": true},
-                {"name": "Revision", "value": "{{.app.status.operationState.syncResult.revision | truncate 7}}", "inline": true}
+                {"name": "Revision", "value": "{{.app.status.operationState.syncResult.revision}}", "inline": true}
               ],
               "footer": {"text": "ArgoCD"},
               "timestamp": "{{.app.status.operationState.finishedAt}}"
