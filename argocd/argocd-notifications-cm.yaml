@@ -132,44 +132,6 @@ data:
             "finished_at": "{{.app.status.operationState.finishedAt}}"
           }
 
-  template.bottlenote-hermes-sync-outofsync: |
-    webhook:
-      hermes-webhook:
-        method: POST
-        body: |
-          {
-            "event_type": "argocd.sync_outofsync",
-            "application": "{{.app.metadata.name}}",
-            "environment": "{{.app.spec.destination.namespace}}",
-            "sync_status": "{{.app.status.sync.status}}",
-            "health_status": "{{.app.status.health.status}}",
-            "operation_phase": "{{.app.status.operationState.phase}}",
-            "revision": "{{.app.status.sync.revision}}",
-            "repo_url": "{{.app.spec.source.repoURL}}",
-            "path": "{{.app.spec.source.path}}",
-            "namespace": "{{.app.spec.destination.namespace}}",
-            "finished_at": "{{.app.status.operationState.finishedAt}}"
-          }
-
-  template.bottlenote-hermes-sync-recovered: |
-    webhook:
-      hermes-webhook:
-        method: POST
-        body: |
-          {
-            "event_type": "argocd.sync_recovered",
-            "application": "{{.app.metadata.name}}",
-            "environment": "{{.app.spec.destination.namespace}}",
-            "sync_status": "{{.app.status.sync.status}}",
-            "health_status": "{{.app.status.health.status}}",
-            "operation_phase": "{{.app.status.operationState.phase}}",
-            "revision": "{{.app.status.sync.revision}}",
-            "repo_url": "{{.app.spec.source.repoURL}}",
-            "path": "{{.app.spec.source.path}}",
-            "namespace": "{{.app.spec.destination.namespace}}",
-            "finished_at": "{{.app.status.operationState.finishedAt}}"
-          }
-
   # -- 트리거 (이벤트 조건) --
   # defaultTriggers 없음 - 앱별 annotation으로 opt-in
 
@@ -193,13 +155,3 @@ data:
     - when: app.status.operationState.phase in ['Succeeded'] and app.status.sync.status == 'Synced' and app.status.health.status == 'Healthy'
       oncePer: app.status.sync.revision
       send: [bottlenote-hermes-deployment]
-
-  trigger.on-bottlenote-sync-outofsync: |
-    - description: BottleNote app drift looks actionable (OutOfSync with unhealthy state)
-      when: app.status.sync.status == 'OutOfSync' and app.status.health.status in ['Degraded', 'Missing']
-      send: [bottlenote-hermes-sync-outofsync]
-
-  trigger.on-bottlenote-sync-recovered: |
-    - description: BottleNote app returned to Synced/Healthy after a drift alert
-      when: app.status.sync.status == 'Synced' and app.status.health.status == 'Healthy'
-      send: [bottlenote-hermes-sync-recovered]
