@@ -8,4 +8,3 @@ metadata:
         path: ksops
 files:
   - argocd-secret.sops.yaml
-  - argocd-notifications-secret.sops.yaml
