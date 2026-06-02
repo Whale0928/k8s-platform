@@ -1,5 +1,5 @@
 # BottleNote AppProject
-# bottlenote-development Application을 자기 namespace에서 관리할 수 있도록 허용
+# BottleNote Application들을 bottlenote namespace에서 관리할 수 있도록 허용
 
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
@@ -11,7 +11,7 @@ spec:
   sourceRepos:
     - https://github.com/bottle-note/environment-variables
   sourceNamespaces:
-    - bottlenote-development
+    - bottlenote
   destinations:
     - namespace: bottlenote
       server: https://kubernetes.default.svc
