@@ -19,18 +19,6 @@ data:
     - name: Content-Type
       value: application/json
 
-
-  service.webhook.hermes-webhook: |
-    url: http://1.227.241.137:8644/webhooks/argocd-release-deployments
-    headers:
-    - name: Content-Type
-      value: application/json
-    - name: X-Gitlab-Token
-      value: $hermes-webhook-token
-    retryWaitMin: 5s
-    retryWaitMax: 30s
-    retryMax: 5
-
   # -- 템플릿 (Discord Embed 포맷) --
 
   template.app-sync-running: |
@@ -46,7 +34,7 @@ data:
               "fields": [
                 {"name": "Project", "value": "{{.app.spec.project}}", "inline": true},
                 {"name": "Namespace", "value": "{{.app.spec.destination.namespace}}", "inline": true},
-                {"name": "Revision", "value": "{{.app.status.operationState.syncResult.revision}}", "inline": true}
+                {"name": "Revision", "value": "{{.app.status.operationState.syncResult.revision | truncate 7}}", "inline": true}
               ],
               "footer": {"text": "ArgoCD"},
               "timestamp": "{{.app.status.operationState.startedAt}}"
@@ -66,7 +54,7 @@ data:
               "fields": [
                 {"name": "Project", "value": "{{.app.spec.project}}", "inline": true},
                 {"name": "Namespace", "value": "{{.app.spec.destination.namespace}}", "inline": true},
-                {"name": "Revision", "value": "{{.app.status.operationState.syncResult.revision}}", "inline": true}
+                {"name": "Revision", "value": "{{.app.status.operationState.syncResult.revision | truncate 7}}", "inline": true}
               ],
               "footer": {"text": "ArgoCD"},
               "timestamp": "{{.app.status.operationState.finishedAt}}"
@@ -114,26 +102,6 @@ data:
             }]
           }
 
-
-  template.bottlenote-hermes-deployment: |
-    webhook:
-      hermes-webhook:
-        method: POST
-        body: |
-          {
-            "event_type": "argocd.deployment",
-            "application": "{{.app.metadata.name}}",
-            "environment": "{{.app.spec.destination.namespace}}",
-            "sync_status": "{{.app.status.sync.status}}",
-            "health_status": "{{.app.status.health.status}}",
-            "operation_phase": "{{.app.status.operationState.phase}}",
-            "revision": "{{.app.status.sync.revision}}",
-            "repo_url": "{{.app.spec.source.repoURL}}",
-            "path": "{{.app.spec.source.path}}",
-            "namespace": "{{.app.spec.destination.namespace}}",
-            "finished_at": "{{.app.status.operationState.finishedAt}}"
-          }
-
   # -- 트리거 (이벤트 조건) --
   # defaultTriggers 없음 - 앱별 annotation으로 opt-in
 
@@ -152,8 +120,3 @@ data:
   trigger.on-health-degraded: |
     - when: app.status.health.status == 'Degraded'
       send: [app-health-degraded]
-
-  trigger.on-bottlenote-deployed: |
-    - when: app.status.operationState.phase in ['Succeeded'] and app.status.sync.status == 'Synced' and app.status.health.status == 'Healthy'
-      oncePer: app.status.sync.revision
-      send: [bottlenote-hermes-deployment]
