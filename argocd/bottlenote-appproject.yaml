@@ -1,0 +1,24 @@
+# BottleNote AppProject
+# bottlenote-development Application을 자기 namespace에서 관리할 수 있도록 허용
+
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: bottlenote
+  namespace: argocd
+spec:
+  description: Bottlenote 프로젝트
+  sourceRepos:
+    - https://github.com/bottle-note/environment-variables
+  sourceNamespaces:
+    - bottlenote-development
+  destinations:
+    - namespace: bottlenote
+      server: https://kubernetes.default.svc
+    - namespace: bottlenote-development
+      server: https://kubernetes.default.svc
+    - namespace: bottlenote-production
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
