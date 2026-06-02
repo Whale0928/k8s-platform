@@ -197,11 +197,9 @@ data:
   trigger.on-bottlenote-sync-outofsync: |
     - description: BottleNote app drift looks actionable (OutOfSync with unhealthy state)
       when: app.status.sync.status == 'OutOfSync' and app.status.health.status in ['Degraded', 'Missing']
-      oncePer: app.status.reconciledAt
       send: [bottlenote-hermes-sync-outofsync]
 
   trigger.on-bottlenote-sync-recovered: |
     - description: BottleNote app returned to Synced/Healthy after a drift alert
       when: app.status.sync.status == 'Synced' and app.status.health.status == 'Healthy'
-      oncePer: app.status.reconciledAt
       send: [bottlenote-hermes-sync-recovered]
