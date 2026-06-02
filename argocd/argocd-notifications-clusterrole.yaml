@@ -1,0 +1,33 @@
+# Namespace-based ArgoCD Notifications에 필요한 cluster-scope watch 권한
+# application.namespaces 사용 시 notifications-controller가 허용된 namespace의
+# Application / argocd-notifications-cm / argocd-notifications-secret을 감시한다.
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: argocd-notifications-controller-namespace-config
+  labels:
+    app.kubernetes.io/component: notifications-controller
+    app.kubernetes.io/name: argocd-notifications-controller
+    app.kubernetes.io/part-of: argocd
+rules:
+  - apiGroups:
+      - argoproj.io
+    resources:
+      - applications
+      - appprojects
+    verbs:
+      - get
+      - list
+      - watch
+      - update
+      - patch
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+      - secrets
+    verbs:
+      - get
+      - list
+      - watch
