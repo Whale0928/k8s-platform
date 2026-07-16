@@ -26,6 +26,11 @@ spec:
           manifestTargets:
             kustomize:
               name: "docker-registry.bottle-note.com/profanity-api"
+        - alias: "profanity-ui"
+          imageName: "docker-registry.bottle-note.com/profanity-ui"
+          manifestTargets:
+            kustomize:
+              name: "docker-registry.bottle-note.com/profanity-ui"
 
     - namePattern: "chatbot-alpha-1"
       images:
