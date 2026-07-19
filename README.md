@@ -33,7 +33,6 @@ Personal Kubernetes platform infrastructure for all projects.
 | Component          | Purpose                          | Node Affinity                      |
 |--------------------|----------------------------------|------------------------------------|
 | ArgoCD             | GitOps 배포 자동화 + Discord 알림 | arm64 (repo-server, redis는 amd64) |
-| HAProxy            | 원본 IP 보존용 TCP ingress (80/443) | instance-node-1, instance-node-2 |
 | Envoy Gateway      | Gateway API 기반 트래픽 라우팅 (80/443) | arm64                         |
 | Cert-Manager       | SSL 인증서 자동 관리 (DNS-01)     | -                                  |
 | External-Secrets   | 1Password 시크릿 동기화           | amd64                              |
@@ -74,8 +73,8 @@ k8s-platform/
 
 ```
 Client -> DNS -> Public IP (Oracle Cloud arm64 nodes)
-  -> HAProxy (TCP passthrough + PROXY Protocol v2)
-    -> Envoy Gateway (ClusterIP, TLS termination)
+  -> K3s ServiceLB (svclb DaemonSet)
+    -> Envoy Gateway (80/443)
       -> HTTPRoute matching
         -> Backend Service (ClusterIP)
 ```
