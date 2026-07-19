@@ -6,9 +6,16 @@ resources:
   - https://github.com/envoyproxy/gateway/releases/download/v1.2.6/install.yaml
   # Custom resources
   - envoyproxy.yaml
+  - haproxy-daemonset.yaml
   - gatewayclass.yaml
   - gateway.yaml
   - certificate.yaml
+
+configMapGenerator:
+  - name: edge-haproxy-config
+    namespace: envoy-gateway-system
+    files:
+      - haproxy.cfg
 
 patches:
   # Envoy Gateway 컨트롤러 → arm64 노드 배치
