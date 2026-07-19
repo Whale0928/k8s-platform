@@ -5,6 +5,7 @@ resources:
   # Envoy Gateway v1.2.6 (Gateway API CRDs 포함)
   - https://github.com/envoyproxy/gateway/releases/download/v1.2.6/install.yaml
   # Custom resources
+  - client-traffic-policy.yaml
   - envoyproxy.yaml
   - haproxy-daemonset.yaml
   - gatewayclass.yaml
