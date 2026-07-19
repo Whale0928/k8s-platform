@@ -46,22 +46,22 @@ spec:
             - -f
             - /usr/local/etc/haproxy/haproxy.cfg
           ports:
-            - name: http
-              containerPort: 80
+            - name: http-canary
+              containerPort: 18080
               protocol: TCP
-            - name: https
-              containerPort: 443
+            - name: https-canary
+              containerPort: 18443
               protocol: TCP
           readinessProbe:
             tcpSocket:
-              port: http
+              port: http-canary
             initialDelaySeconds: 2
             periodSeconds: 5
             timeoutSeconds: 2
             failureThreshold: 3
           livenessProbe:
             tcpSocket:
-              port: http
+              port: http-canary
             initialDelaySeconds: 5
             periodSeconds: 10
             timeoutSeconds: 2
