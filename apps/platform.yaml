@@ -22,3 +22,9 @@ spec:
     syncOptions:
     - CreateNamespace=true
     - ServerSideApply=true
+  ignoreDifferences:
+    # ServiceAccount 토큰 Secret의 data는 클러스터가 채운다 - 매니페스트와 다른 것이 정상
+    - group: ""
+      kind: Secret
+      jsonPointers:
+        - /data
