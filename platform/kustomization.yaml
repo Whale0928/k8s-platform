@@ -11,3 +11,4 @@ resources:
   - gateway
   - uptime-kuma
   - redis-operator
+  - access
