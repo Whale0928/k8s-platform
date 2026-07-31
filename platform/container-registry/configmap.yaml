@@ -9,7 +9,7 @@
 # - CVE 스캔: 24시간 간격으로 trivy DB 업데이트 및 취약점 스캔
 # - Scrub: 24시간 간격으로 데이터 무결성 검사
 # - Trust: cosign + notation 서명 검증 활성화
-# - Retention Policy: 미설정 (수동 삭제 필요)
+# - Retention Policy: Product/Admin 개발 이미지는 최근 5개 보존 (dry-run)
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -24,7 +24,49 @@ data:
         "rootDirectory": "/var/lib/zot",
         "gc": true,
         "gcDelay": "1h",
-        "gcInterval": "24h"
+        "gcInterval": "24h",
+        "retention": {
+          "dryRun": true,
+          "delay": "24h",
+          "policies": [
+            {
+              "repositories": ["bottlenote-product-api"],
+              "deleteReferrers": true,
+              "deleteUntagged": true,
+              "keepTags": [
+                {
+                  "patterns": ["^product_[0-9a-f]{7}$"],
+                  "mostRecentlyPushedCount": 5
+                },
+                {
+                  "patterns": [".*"]
+                }
+              ]
+            },
+            {
+              "repositories": ["bottlenote-admin-api"],
+              "deleteReferrers": true,
+              "deleteUntagged": true,
+              "keepTags": [
+                {
+                  "patterns": ["^admin_[0-9a-f]{7}$"],
+                  "mostRecentlyPushedCount": 5
+                },
+                {
+                  "patterns": [".*"]
+                }
+              ]
+            },
+            {
+              "repositories": ["**"],
+              "keepTags": [
+                {
+                  "patterns": [".*"]
+                }
+              ]
+            }
+          ]
+        }
       },
       "http": {
         "address": "0.0.0.0",
