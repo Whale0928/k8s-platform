@@ -13,3 +13,4 @@ resources:
   - redis-operator
   - postgres
   - access
+  - warpgate
