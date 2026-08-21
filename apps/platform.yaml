@@ -28,3 +28,8 @@ spec:
       kind: Secret
       jsonPointers:
         - /data
+    # SSA 비교에서 클러스터가 채우는 vct 기본값(apiVersion/status 등)이 영구 OutOfSync를 만든다
+    - group: apps
+      kind: StatefulSet
+      jsonPointers:
+        - /spec/volumeClaimTemplates
