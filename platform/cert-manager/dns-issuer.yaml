@@ -25,6 +25,7 @@ spec:
           dnsZones:
             - "dead-whale.org"
             - "kr-filter.com"
+            - "cheese-lake.com"
       - dns01:
           route53:
             region: ap-northeast-2
@@ -60,6 +61,7 @@ spec:
           dnsZones:
             - "dead-whale.org"
             - "kr-filter.com"
+            - "cheese-lake.com"
       - dns01:
           route53:
             region: ap-northeast-2
