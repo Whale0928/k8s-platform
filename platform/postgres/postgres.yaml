@@ -1,0 +1,97 @@
+# 공용 PostgreSQL 18
+# 프로젝트별 격리는 인스턴스 분리가 아니라 데이터베이스 분리로 한다.
+# 데이터베이스와 계정 생성은 root(postgres) 계정으로 수동 수행한다.
+# 외부 노출은 하지 않는다 - 외부 접속 경로는 Warpgate가 담당한다.
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  selector:
+    app: postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      # local-path 볼륨은 노드에 묶이므로 DB 전용 노드(pve-pod-2)에 고정한다
+      nodeSelector:
+        kubernetes.io/hostname: pve-pod-2
+      containers:
+        - name: postgres
+          image: postgres:18.6-trixie
+          # 공식 이미지에는 ko_KR 로케일 소스만 있고 생성은 안 되어 있다.
+          # root 상태에서 로케일을 만든 뒤 원래 entrypoint로 넘긴다(약 0.9초).
+          command: ["bash", "-c"]
+          args:
+            - |
+              localedef -i ko_KR -c -f UTF-8 -A /usr/share/locale/locale.alias ko_KR.UTF-8
+              exec docker-entrypoint.sh postgres \
+                -c timezone=Asia/Seoul \
+                -c log_timezone=Asia/Seoul
+          env:
+            - name: TZ
+              value: Asia/Seoul
+            - name: LANG
+              value: ko_KR.UTF-8
+            # 로케일은 initdb 시점에 고정되어 이후 변경할 수 없다.
+            # 정렬은 ICU가 담당해 glibc 버전 변화에 영향받지 않는다.
+            - name: POSTGRES_INITDB_ARGS
+              value: >-
+                --encoding=UTF8
+                --locale-provider=icu --icu-locale=ko-KR
+                --lc-collate=ko_KR.UTF-8 --lc-ctype=ko_KR.UTF-8
+                --lc-time=ko_KR.UTF-8 --lc-messages=ko_KR.UTF-8
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-root
+                  key: POSTGRES_PASSWORD
+          ports:
+            - name: postgres
+              containerPort: 5432
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "postgres"]
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "postgres"]
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 4Gi
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: local-path
+        resources:
+          requests:
+            storage: 50Gi
