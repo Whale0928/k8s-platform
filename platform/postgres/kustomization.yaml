@@ -1,0 +1,13 @@
+# Kustomization for 공용 PostgreSQL
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: postgres
+
+resources:
+  - namespace.yaml
+  - postgres.yaml
+
+generators:
+  - ksops-generator.yaml
