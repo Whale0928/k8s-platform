@@ -12,3 +12,4 @@ resources:
   - uptime-kuma
   - redis-operator
   - access
+  - warpgate
