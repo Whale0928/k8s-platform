@@ -1,0 +1,33 @@
+# PostgreSQL 전용 디스크 PV
+# pve-pod-2의 /dev/sdb(50G, ext4, label=pgdata) → /mnt/pgdata
+# claimRef를 미리 지정해 StatefulSet이 만드는 PVC가 정확히 이 PV에 바인딩되게 한다.
+# (지정하지 않으면 크기가 맞는 다른 PV를 잡을 수 있다)
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: postgres-data
+  labels:
+    app.kubernetes.io/name: postgres
+spec:
+  capacity:
+    storage: 50Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-disk
+  local:
+    path: /mnt/pgdata
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    namespace: postgres
+    name: data-postgres-0
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - pve-pod-2

@@ -1,0 +1,14 @@
+# 전용 디스크용 StorageClass
+# local-path와 달리 노드에 물리적으로 분리된 디스크를 PV로 직접 정의해 쓴다.
+# - 용량이 실제 제한으로 동작한다 (local-path는 쿼터를 강제하지 않음)
+# - reclaimPolicy Retain: PVC를 지워도 데이터가 남는다
+# - WaitForFirstConsumer: 파드가 스케줄된 뒤 바인딩해 노드 어피니티와 충돌하지 않는다
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-disk
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain
+allowVolumeExpansion: false

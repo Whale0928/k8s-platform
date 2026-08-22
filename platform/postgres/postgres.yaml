@@ -91,7 +91,9 @@ spec:
         name: data
       spec:
         accessModes: ["ReadWriteOnce"]
-        storageClassName: local-path
+        # 전용 디스크(/mnt/pgdata, pve-pod-2 /dev/sdb). local-path와 달리
+        # 용량이 실제 제한으로 동작하고 PVC를 지워도 데이터가 남는다.
+        storageClassName: local-disk
         resources:
           requests:
             storage: 50Gi
