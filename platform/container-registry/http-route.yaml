@@ -12,6 +12,7 @@ spec:
     namespace: envoy-gateway-system
   hostnames:
   - docker-registry.bottle-note.com
+  - docker-registry.dead-whale.org
   rules:
   - matches:
     - path:
