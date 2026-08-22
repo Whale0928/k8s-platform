@@ -66,7 +66,6 @@ k8s-platform/
     ├── image-manager/      # ArgoCD Image Updater
     ├── container-registry/ # Zot OCI Registry (amd64)
     ├── coredns/            # CoreDNS 설정
-    ├── uptime-kuma/        # 서비스 모니터링 (amd64)
     └── redis-operator/     # Redis Operator (Opstree v0.24.0)
 ```
 
@@ -106,7 +105,6 @@ Client -> DNS -> Public IP (Oracle Cloud arm64 nodes)
 | Bottlenote Frontend (dev) | development.bottle-note.com | bottlenote-development |
 | Profanity Filter API | api.profanity.kr-filter.com | profanity-production |
 | Docker Registry | docker-registry.bottle-note.com | container-registry |
-| Uptime Kuma | uptime-kuma.dead-whale.org | uptime-kuma |
 
 ## Node Workload Distribution
 

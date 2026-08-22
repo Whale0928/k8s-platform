@@ -9,7 +9,6 @@ resources:
   - image-manager
   - container-registry
   - gateway
-  - uptime-kuma
   - redis-operator
   - postgres
   - access
