@@ -29,3 +29,20 @@ data:
             <level>warning</level>
         </logger>
     </clickhouse>
+  # 쿼리 단위 자원 제한 (users.d에 병합)
+  #
+  # [핵심] external_group_by/sort가 0이면 메모리 초과 시 쿼리가 "실패"한다.
+  # 값을 주면 디스크로 흘려보내고 "느려지지만 완주"한다. 데이터가 자라면서
+  # 예고 없이 실패하는 것을 막는 장치다.
+  users.xml: |
+    <clickhouse>
+        <profiles>
+            <default>
+                <!-- 쿼리 하나가 서버 전체를 먹지 못하게 하는 상한 -->
+                <max_memory_usage>4294967296</max_memory_usage>
+                <!-- 이 값을 넘으면 디스크로 흘려보낸다 (상한의 절반) -->
+                <max_bytes_before_external_group_by>2147483648</max_bytes_before_external_group_by>
+                <max_bytes_before_external_sort>2147483648</max_bytes_before_external_sort>
+            </default>
+        </profiles>
+    </clickhouse>
