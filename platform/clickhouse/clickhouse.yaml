@@ -51,6 +51,10 @@ spec:
                 secretKeyRef:
                   name: clickhouse-root
                   key: CLICKHOUSE_PASSWORD
+            # default 계정에 SQL로 사용자/권한을 관리할 권한을 준다.
+            # 없으면 CREATE USER가 ACCESS_DENIED로 막혀 프로젝트 계정을 만들 수 없다.
+            - name: CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT
+              value: "1"
           ports:
             - name: native
               containerPort: 9000
