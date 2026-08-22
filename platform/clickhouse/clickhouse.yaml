@@ -67,6 +67,10 @@ spec:
               mountPath: /etc/clickhouse-server/config.d/local.xml
               subPath: local.xml
               readOnly: true
+            - name: config
+              mountPath: /etc/clickhouse-server/users.d/local.xml
+              subPath: users.xml
+              readOnly: true
             - name: data
               mountPath: /var/lib/clickhouse
           # /ping은 인증을 요구하지 않는다. clickhouse-client 방식은
@@ -84,12 +88,16 @@ spec:
             initialDelaySeconds: 60
             periodSeconds: 20
           resources:
+            # request를 낮게 두면 노드 메모리 압박 시 가장 먼저 축출된다.
+            # 분석 워크로드 특성상 실사용이 request를 크게 넘으므로 올려둔다.
             requests:
               cpu: 250m
-              memory: 512Mi
+              memory: 2Gi
+            # 노드 11.7GB 중 다른 파드 실사용이 낮아 8Gi까지 여유가 있다.
+            # 서버는 ratio 0.7이 적용되어 실제로는 약 5.6GB까지 쓴다.
             limits:
-              cpu: "2"
-              memory: 4Gi
+              cpu: "4"
+              memory: 8Gi
       volumes:
         - name: config
           configMap:
