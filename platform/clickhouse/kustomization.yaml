@@ -1,0 +1,15 @@
+# Kustomization for 공유 ClickHouse
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: clickhouse
+
+resources:
+  - namespace.yaml
+  - pv.yaml
+  - configmap.yaml
+  - clickhouse.yaml
+
+generators:
+  - ksops-generator.yaml

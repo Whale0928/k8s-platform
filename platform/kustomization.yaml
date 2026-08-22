@@ -12,5 +12,6 @@ resources:
   - gateway
   - redis-operator
   - postgres
+  - clickhouse
   - access
   - warpgate
