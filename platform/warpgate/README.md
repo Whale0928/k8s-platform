@@ -35,5 +35,10 @@ postgresql://<유저>#<타겟명>:<비밀번호>@warpgate.dead-whale.org:5432/<d
 - **PROXY protocol 결합**: haproxy의 warpgate backend `send-proxy-v2`와
   warpgate.yaml 각 리스너의 `proxy_protocol: true`는 반드시 함께 켜고 끈다.
   한쪽만 바뀌면 해당 리스너 접속이 전부 실패한다.
-- **production DB는 타겟으로 등록하지 않는다.** 경로를 만들지 않는 것이 격리 방식이다.
+- **production 타겟은 admin role만 허용한다.** 처음에는 "등록하지 않는다"가 원칙이었으나
+  2026.08.22에 admin 전용 타겟(`cheese-lake-prod`, `cheese-lake-clickhouse-prod`)으로
+  등록했다. Allow roles에 `service`/`users`를 체크하는 순간 자동화가 운영 DB에 닿는다.
+- **Warpgate가 지원하지 않는 DB**(ClickHouse, Redis 등)는 호환 포트로 우회한다.
+  ClickHouse는 PostgreSQL 호환 포트 9005를 열어 Postgres 타겟으로 등록했다.
+  상세는 Documents/sync/프로젝트/Warpgate 중앙 접근 관제/Warpgate 운영 가이드.
 - OCI 방화벽(서브넷 Security List)에서 5432/2222 개방 여부가 외부 접근을 최종 결정한다.
