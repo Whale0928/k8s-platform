@@ -1,0 +1,33 @@
+# ClickHouse 전용 디스크 PV
+# pve-pod-2의 /dev/sdc(100G, ext4, label=chdata) → /mnt/chdata
+# PostgreSQL과 물리 디스크를 분리해, ClickHouse가 용량을 다 써도
+# PostgreSQL이 함께 중단되지 않게 한다.
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: clickhouse-data
+  labels:
+    app.kubernetes.io/name: clickhouse
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-disk
+  local:
+    path: /mnt/chdata
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    namespace: clickhouse
+    name: data-clickhouse-0
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - pve-pod-2

@@ -1,0 +1,12 @@
+# KSOPS Secret Generator
+---
+apiVersion: viaduct.ai/v1
+kind: ksops
+metadata:
+  name: clickhouse-secret-generator
+  annotations:
+    config.kubernetes.io/function: |
+      exec:
+        path: ksops
+files:
+  - ./clickhouse-secret.sops.yaml
