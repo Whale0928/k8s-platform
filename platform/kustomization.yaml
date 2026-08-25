@@ -15,3 +15,4 @@ resources:
   - clickhouse
   - access
   - warpgate
+  - microsocks

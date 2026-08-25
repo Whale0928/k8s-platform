@@ -1,0 +1,95 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: microsocks
+  namespace: egress-proxy
+  labels:
+    app.kubernetes.io/name: microsocks
+    app.kubernetes.io/component: egress-proxy
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: microsocks
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: microsocks
+        app.kubernetes.io/component: egress-proxy
+    spec:
+      # 노드의 Tailscale IP를 고정 SOCKS5 endpoint로 사용한다. 별도 Service는
+      # 연결마다 실제 출구를 바꿀 수 있으므로 만들지 않는다.
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 10
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - instance-node-1
+                      - instance-node-2
+                      - instance-node-3
+                      - instance-node-4
+                      - pve-pod-1
+                      - pve-pod-2
+      containers:
+        - name: microsocks
+          # v1.0.5, linux/amd64 + linux/arm64 OCI image index
+          image: ghcr.io/httptoolkit/docker-socks-tunnel@sha256:5ccd90fb41103cffcda301666028c8d85a7bf5c49657aa934235c4b383267626
+          imagePullPolicy: IfNotPresent
+          args:
+            - -i
+            - $(NODE_IP)
+            - -p
+            - "1080"
+          env:
+            # K3s의 primary node IP는 tailscale0 주소다. Downward API를 사용하면
+            # 컨테이너에 iproute2나 별도 시작 스크립트가 필요 없다.
+            - name: NODE_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+          ports:
+            - name: socks5
+              containerPort: 1080
+              protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: socks5
+            initialDelaySeconds: 2
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: socks5
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 5m
+              memory: 8Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
