@@ -1,0 +1,39 @@
+apiVersion: argocd-image-updater.argoproj.io/v1alpha1
+kind: ImageUpdater
+metadata:
+  name: bottlenote-production-updater
+  namespace: argocd
+spec:
+  namespace: bottlenote
+
+  writeBackConfig:
+    method: "git"
+    gitConfig:
+      repository: "https://github.com/bottle-note/environment-variables"
+      branch: "main"
+      writeBackTarget: "kustomization"
+
+  applicationRefs:
+    - namePattern: "bottlenote-production"
+      images:
+        - alias: "product-api"
+          imageName: "docker-registry.bottle-note.com/bottlenote-product-api:product_latest_production"
+          commonUpdateSettings:
+            updateStrategy: "digest"
+            allowTags: "regexp:^product_latest_production$"
+            platforms:
+              - "linux/arm64"
+          manifestTargets:
+            kustomize:
+              name: "bottlenote-product-api"
+
+        - alias: "admin-api"
+          imageName: "docker-registry.bottle-note.com/bottlenote-admin-api:admin_latest_production"
+          commonUpdateSettings:
+            updateStrategy: "digest"
+            allowTags: "regexp:^admin_latest_production$"
+            platforms:
+              - "linux/arm64"
+          manifestTargets:
+            kustomize:
+              name: "bottlenote-admin-api"

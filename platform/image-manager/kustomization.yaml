@@ -10,6 +10,7 @@ resources:
   - 30-configmap.yaml
   - 40-imageupdater.yaml
   - 50-bottlenote-development-imageupdater.yaml
+  - 51-bottlenote-production-imageupdater.yaml
 
 generators:
   - ksops-generator.yaml
