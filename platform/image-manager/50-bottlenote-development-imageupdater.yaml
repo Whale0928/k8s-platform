@@ -21,8 +21,6 @@ spec:
           commonUpdateSettings:
             updateStrategy: "digest"
             allowTags: "regexp:^product_latest_development$"
-            ignoreTags:
-              - "*"
             platforms:
               - "linux/arm64"
           manifestTargets:
@@ -34,8 +32,6 @@ spec:
           commonUpdateSettings:
             updateStrategy: "digest"
             allowTags: "regexp:^admin_latest_development$"
-            ignoreTags:
-              - "*"
             platforms:
               - "linux/arm64"
           manifestTargets:
