@@ -28,6 +28,36 @@ data:
         <logger>
             <level>warning</level>
         </logger>
+
+        <!-- ClickHouse 가 스스로 남기는 내부 로그 표(system.*_log)의 보존 기간.
+             기본은 기한 없음이라 기동 12일 만에 2.3 GB — 우리 데이터(2.6 GB)와
+             맞먹는 크기 — 가 쌓였다 (2026.09.02 실측: trace_log 725 MB ·
+             metric_log 544 · part_log 418 · processors_profile_log 222 ·
+             query_log 190 · asynchronous_metric_log 179).
+             운영 진단에는 며칠치면 충분하다. 프로파일러 계열(trace · processors
+             profile)은 진단할 때만 켜면 되므로 끈다 — remove 는 표를 만들지 않게
+             한다. TTL 은 재기동 때 표에 적용되므로 바꾸면 파드를 다시 띄워야 한다. -->
+        <query_log>
+            <ttl>event_date + INTERVAL 14 DAY DELETE</ttl>
+        </query_log>
+        <part_log>
+            <ttl>event_date + INTERVAL 7 DAY DELETE</ttl>
+        </part_log>
+        <metric_log>
+            <ttl>event_date + INTERVAL 7 DAY DELETE</ttl>
+        </metric_log>
+        <asynchronous_metric_log>
+            <ttl>event_date + INTERVAL 7 DAY DELETE</ttl>
+        </asynchronous_metric_log>
+        <query_metric_log>
+            <ttl>event_date + INTERVAL 7 DAY DELETE</ttl>
+        </query_metric_log>
+        <error_log>
+            <ttl>event_date + INTERVAL 14 DAY DELETE</ttl>
+        </error_log>
+        <trace_log remove="1"/>
+        <processors_profile_log remove="1"/>
+        <query_thread_log remove="1"/>
     </clickhouse>
   # 쿼리 단위 자원 제한 (users.d에 병합)
   #
