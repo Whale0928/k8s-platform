@@ -68,7 +68,7 @@ flowchart LR
 | Frontend | `main` push에 `Deploy Development`가 직접 실행됨; 같은 push의 `빌드 검증`·`테스트 검증` 성공을 기다리지 않음 | `frontend_dev_<short SHA>` | `frontend_latest_development` |
 | Admin Dashboard | `main`의 `ci planet scale` 성공 후 `workflow_run`; 성공한 run의 정확한 `head_sha` checkout | `dashboard_dev_<short SHA>` | `dashboard_latest_development` |
 
-각 workflow는 source commit에 고정된 `git.environment-variables` submodule을 checkout해 환경 파일과 서명 키 경로를 사용하고, 이미지를 `linux/arm64`로 build/push한 뒤 Cosign key로 서명한다. Image Updater가 mutable 태그의 새 OCI index digest를 발견하면 개발 overlay의 `digest:`를 갱신하고, Argo CD가 그 GitOps revision을 sync해 rollout한다.
+각 workflow는 source commit에 고정된 `git.environment-variables` submodule을 checkout해 환경 파일과 서명 키 경로를 사용하고, 이미지를 `linux/arm64`로 build/push한다. **build/push는 immutable 태그 하나만 올리고, Cosign 서명과 검증을 통과한 뒤에야 `docker buildx imagetools create`로 mutable 개발 채널 태그를 그 digest에 부착한다.** Image Updater가 채널 태그의 새 OCI index digest를 발견하면 개발 overlay의 `digest:`를 갱신하고, Argo CD가 그 GitOps revision을 sync해 rollout한다.
 
 세 개발 workflow는 모두 `cancel-in-progress: true`인 저장소별 concurrency group을 사용한다. 연속된 `main` 변경에서는 이전 개발 배포가 취소될 수 있으므로, 취소된 run을 실패 배포로 단정하지 말고 각 저장소의 최신 `main` SHA를 기준으로 CI와 deploy run을 함께 추적한다. 특히 Frontend는 배포가 CI와 병렬로 시작하므로 Actions 성공 순서가 품질 gate 순서를 뜻하지 않는다.
 
@@ -106,6 +106,10 @@ PR에서 source, key, mode/service와 `changed files = 0`을 확인한 다음 me
 
 빈 release commit도 `main` push이므로 일반 개발 경로를 함께 trigger한다. 운영 Release PR merge와 별개로, Backend와 Admin Dashboard는 그 source의 CI 성공 뒤 개발 배포가 시작되고 Frontend는 빈 commit push 즉시 개발 배포가 시작된다.
 
+**release branch를 수동으로 만들지 않는다.** `releases/**`와 `hotfixes/**`는 `release PR create` workflow만 만든다. release branch는 그 시점 source commit의 `.github/workflows` 사본을 그대로 들고 오므로, 손으로 만든 branch는 낡은 workflow snapshot을 운영 경로에 다시 들여올 수 있다. 2026-08-31 Admin Dashboard 사고가 이 경우였다.
+
+Admin Dashboard의 hotfix release는 `release PR create`의 `release_type: hotfix`로 만들며 base branch가 `hotfixes/YYYY-MM-DD/N`이다. 표준 release의 `releases/**`와 namespace를 나누는 이유는, 과거 source의 workflow snapshot이 `branches: ['releases/**']`만 filter하므로 `hotfixes/**`를 base로 하는 PR에서는 실행되지 않기 때문이다. 표준 gate는 `release_pr_merged.yml`, hotfix gate는 `hotfix_pr_merged.yml`이 소유하고 배포 본체는 `workflow_call`로 공유한다. Frontend와 Backend는 hotfix 흐름이 없어 `releases/**`만 사용한다.
+
 ### 5.2 승인 없는 merge 계약
 
 현재 세 Release PR workflow는 별도 reviewer approval을 요구하지 않는다.
@@ -117,7 +121,31 @@ PR에서 source, key, mode/service와 `changed files = 0`을 확인한 다음 me
 
 Backend의 일반 `main` 변경에는 active ruleset이 PR과 strict `product-ci-final-build`를 요구하고 merge method를 rebase로 제한한다. 다만 조직 관리자 bypass가 있으며, 세 저장소 모두 Release PR의 base는 `main`이 아니라 `releases/**`다. 따라서 일반 `main` 보호 규칙이 Release PR 승인 정책까지 대신한다고 가정하지 말고, 권한 통제와 merge 전 확인 절차를 workflow 검증만큼 중요하게 취급한다.
 
-### 5.3 merge 뒤 자동 안전장치
+### 5.3 이미지 공개 불변조건
+
+Release PR 경로와 개발 경로 모두 공용 composite action `.github/actions/docker-build-push`를 사용하며, 그 action은 다음 순서를 강제한다.
+
+```text
+build/push (immutable 태그 1개, cache export 없음)
+  → digest 확인
+  → cosign sign
+  → cosign verify
+  → imagetools create 로 채널 태그 승격
+  → 승격된 채널 태그의 digest 동등성 + 서명 재검증
+  → build cache export (조건부, continue-on-error, 승격 이후)
+```
+
+여기서 나오는 계약은 다음과 같다.
+
+- **immutable 태그 push는 운영 반영이 아니다.** Image Updater의 `allowTags`가 `regexp:^<채널명>$` 앵커 정규식이므로 immutable 태그는 후보에 들어가지 않는다.
+- **승격 이전 어느 단계가 실패해도 채널 태그의 digest는 바뀌지 않는다.** build 실패, cache export 실패, 서명 실패, 검증 실패가 모두 여기에 해당한다.
+- **채널 태그가 가리키는 digest는 항상 cosign 검증을 통과한 digest다.** 승격 직후 채널 태그 자체에 대해 한 번 더 verify한다.
+- 승격은 재빌드가 아니라 태그 부착이므로 immutable 태그와 채널 태그의 digest가 같다. 다르면 action이 즉시 실패한다.
+- Release run은 `cache-export: 'false'`라 cache export 단계를 skip한다. 개발 run은 `'true'`이며 실패해도 run을 실패시키지 않는다.
+
+`batch`는 Image Updater 대상이 아니어서 승격할 채널이 없다. `promote-tags`가 비어 있으면 승격과 재검증 단계 전체가 skip된다.
+
+### 5.4 merge 뒤 자동 안전장치
 
 merge event를 받은 `release PR deployment`는 배포 전에 다음을 다시 검증한다.
 
@@ -135,7 +163,7 @@ merge event를 받은 `release PR deployment`는 배포 전에 다음을 다시 
 
 생성 workflow도 같은 release branch가 이미 존재하거나 같은 base/head의 열린 PR이 있으면 실패한다. 원격 branch·commit·PR을 일부 만든 뒤 실패했을 때는 자동 삭제하지 않고 수동 점검을 요구하여, 잘못된 cleanup으로 정상 ref를 지우지 않도록 한다.
 
-### 5.4 Backend modes
+### 5.5 Backend modes
 
 | mode | Gradle build | 발행하는 운영 태그 | 바뀌는 workload |
 |---|---|---|---|
@@ -147,14 +175,14 @@ merge event를 받은 `release PR deployment`는 배포 전에 다음을 다시 
 
 현재 release build는 선택 모듈에 대해 Gradle `build -x test`를 실행한다. 테스트 증거는 release build 자체가 아니라 source가 main에 들어올 때의 CI에서 확보하는 구조다. Release PR을 너무 빨리 merge하거나 admin bypass로 검증되지 않은 main을 만들지 않는다.
 
-### 5.5 Frontend와 Admin Dashboard
+### 5.6 Frontend와 Admin Dashboard
 
 | 저장소 | release commit | immutable 운영 태그 | mutable 운영 태그 |
 |---|---|---|---|
 | `bottle-note-frontend` | `release(frontend): YYYY-MM-DD/N` | `frontend_YYYY.MM.DD.N` | `frontend_latest_production` |
 | `admin-dashboard` | `release(dashboard): YYYY-MM-DD/N` | `dashboard_YYYY.MM.DD.N` | `dashboard_latest_production` |
 
-두 workflow는 release PR에서 전달된 full source SHA를 checkout하고 그 commit에 고정된 `git.environment-variables` submodule의 SOPS 환경 파일로 build한다. Release PR 경로에서는 immutable 태그와 production latest를 함께 push하고 Image Updater에 handoff한다. 기존 GitHub Release published 호환 경로는 별도 immutable 태그를 만들고 overlay를 직접 수정하므로 현재 표준 운영 경로로 사용하지 않는다.
+두 workflow는 release PR에서 전달된 full source SHA를 checkout하고 그 commit에 고정된 `git.environment-variables` submodule의 SOPS 환경 파일로 build한다. **Release PR 경로는 immutable 태그만 push한 뒤 Cosign 서명 → 서명 검증 → production latest 승격 → 승격된 채널 태그 재검증 순서로 진행하며, 승격 이전 어느 단계가 실패해도 production latest는 이전 digest를 그대로 가리킨다.** 승격이 끝난 뒤 Image Updater에 handoff한다. 기존 GitHub Release published 호환 경로는 별도 immutable 태그를 만들고 overlay를 직접 수정하므로 현재 표준 운영 경로로 사용하지 않는다.
 
 ## 6. 태그, digest, write-back, Argo
 
