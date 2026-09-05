@@ -1,18 +1,21 @@
 # BottleNote 배포 운영 가이드
 
-마지막 현행 확인: 2026.08.29 20:01 KST
+마지막 원격 코드·Actions 확인: 2026.09.05 KST
 
 이 문서는 BottleNote 애플리케이션의 현재 배포 계약을 사람과 AI 운영자가 같은 방식으로 해석하도록 만든 실행 기준이다. 표준 경로는 `애플리케이션 저장소 → Zot Registry → Argo CD Image Updater → environment-variables → Argo CD → Kubernetes`이며, GitHub Actions 성공만으로 배포 완료를 선언하지 않는다.
+
+현재 설명은 13절의 고정 SHA를 기준으로 한다. 12절의 2026.08.29 Registry·클러스터 실증은 당시 기록이며, 현재 workflow나 runtime이 같다는 근거로 사용하지 않는다. 이번 감사에서는 Registry·클러스터·HTTP 상태를 새로 확인하지 않았다.
 
 ## 1. 핵심 원칙
 
 1. 개발 배포는 애플리케이션 저장소별 `main` 변경을 기준으로 시작한다. Backend와 Admin Dashboard는 선행 CI 성공이 gate이고, Frontend는 현재 `main` push와 동시에 직접 시작한다.
-2. 운영 Product/Admin/Frontend/Admin Dashboard는 각 저장소의 `release PR create`로 만든 빈 Release PR을 사람이 merge할 때 배포를 시작한다.
+2. 표준 운영 릴리즈는 각 저장소의 `release PR create`로 만든 빈 Release PR을 merge할 때 시작한다. Admin Dashboard의 핫픽스만 별도 `hotfixes/**` PR 경로를 사용한다.
 3. Release PR에는 별도 승인 리뷰가 필요하지 않다. 따라서 **merge 권한을 가진 사람이 merge하는 행위 자체가 운영 배포 승인**이다.
-4. Release PR 경로는 변경 불가능한 감사용 태그와 환경별 mutable `latest` 태그를 함께 발행한다. 실제 배포 상태는 `latest`가 가리키는 digest로 고정한다.
+4. 이미지는 감사용 immutable 태그로 먼저 발행하고 digest 확인·서명·서명 검증을 통과한 뒤 환경별 mutable `latest`로 승격한다. 실제 배포 상태는 그 digest로 고정한다.
 5. Argo CD Image Updater는 30초마다 digest를 확인하고 `environment-variables`의 Kustomization에 Git write-back한다. Argo CD가 그 커밋을 동기화해야 Kubernetes rollout이 시작된다.
 6. 완료 판정은 Actions, Registry, GitOps 커밋, Argo 상태, Deployment 이미지, Pod readiness, HTTP health를 모두 확인한 뒤 내린다.
 7. 애플리케이션 배포를 위해 로컬에서 이미지를 push하거나 Kubernetes 매니페스트를 직접 apply하지 않는다.
+8. `releases/**`, `hotfixes/**`를 수동으로 만들지 않는다. 각 저장소의 Release PR 생성 workflow를 사용한다. 브랜치에 남은 과거 workflow 사본이 실행 경로를 바꿀 수 있다.
 
 ## 2. 저장소와 책임 경계
 
@@ -20,15 +23,18 @@
 |---|---|---|
 | `bottle-note-api-server` | Product/Admin CI, 개발 이미지 발행, 운영 Release PR 생성·검증, Backend 이미지 발행·서명 | `.github/workflows/ci_pipeline.yml`, `deploy_development_applications.yml`, `release_pr_pilot_create.yml`, `release_pr_pilot_merged.yml`, `deploy_release_applications.yml` |
 | `bottle-note-frontend` | Frontend build/test CI, `main` push 개발 배포, 운영 Release PR 생성·검증, Frontend 이미지 발행·서명 | `.github/workflows/build_validation.yml`, `test_validation.yml`, `deploy_development.yml`, `release_pr_create.yml`, `release_pr_merged.yml`, `deploy_release_applications.yml` |
-| `admin-dashboard` | Admin Dashboard CI, CI 성공 후 개발 배포, 운영 Release PR 생성·검증, Dashboard 이미지 발행·서명 | `.github/workflows/ci.yml`, `deploy-dev.yml`, `release_pr_create.yml`, `release_pr_merged.yml`, `deploy_release_applications.yml` |
+| `admin-dashboard` | Dashboard CI, 개발 배포, 표준·핫픽스 Release PR 검증, 이미지 발행·서명·승격 | `.github/workflows/ci.yml`, `deploy-dev.yml`, `release_pr_create.yml`, `release_pr_merged.yml`, `hotfix_pr_merged.yml`, `deploy_release_applications.yml` |
+| `bottle-note-app` | Android 빌드와 Google Play internal draft 업로드 | Android 배포 workflow; 5.7절 |
 | `environment-variables` | Base/개발/운영 Kustomize 선언, 암호화 Secret, BottleNote Argo Application | `deploy/base`, `deploy/overlays/{development,production}`, `deploy/argocd/bottlenote` |
 | `k8s-platform` | Argo CD, Argo CD Image Updater, Zot Registry, Gateway 등 플랫폼 제어면 | `platform/image-manager`, `argocd`, `platform/container-registry` |
 | Zot Registry | 이미지 태그, OCI index digest, Cosign signature 저장 | `docker-registry.bottle-note.com` |
 | Argo CD | `environment-variables/main`을 클러스터에 자동 동기화 | `bottlenote-development`, `bottlenote-production` Application |
 
-`product-api`, `admin-api`, `frontend`, `admin-dashboard`는 Image Updater의 digest write-back 대상이다. `batch`는 이 경로에 포함되지 않으며 `deploy_batch.yml`의 명시적 버전과 GitOps 갱신을 사용한다. 운영 Batch는 GitHub Environment `production` 승인이 별도로 필요하다.
+`product-api`, `admin-api`, `frontend`, `admin-dashboard`는 Image Updater의 digest write-back 대상이다. `batch`는 이 경로에 포함되지 않으며 `deploy_batch.yml`의 명시적 버전과 GitOps 갱신을 사용한다. 운영 Batch는 GitHub Environment를 사용하지만 현재 reviewer 승인 규칙은 없으며, Environment 사용 자체가 별도 승인 gate를 뜻하지 않는다.
 
 ## 3. 현재 배포 구조
+
+아래는 네 웹서비스의 개발·표준 운영 경로다. Dashboard 핫픽스는 5.6절, Batch와 모바일은 5.7절을 따른다.
 
 ```mermaid
 flowchart LR
@@ -41,9 +47,11 @@ flowchart LR
     FM --> RP
     DM --> RP
     RP -->|human merge| PROD[Production image build]
-    DEV --> Z[Zot mutable tag and immutable tag]
+    DEV --> Z[Zot immutable image]
     PROD --> Z
-    Z -->|digest scan every 30s| IU[Argo CD Image Updater]
+    Z --> V[Digest check and cosign sign/verify]
+    V --> P[Promote channel tag and verify]
+    P -->|digest check every 30s| IU[Argo CD Image Updater]
     IU -->|git write-back| EV[environment-variables main]
     EV --> A[Argo CD automated sync]
     A --> K[Kubernetes rollout]
@@ -68,7 +76,9 @@ flowchart LR
 | Frontend | `main` push에 `Deploy Development`가 직접 실행됨; 같은 push의 `빌드 검증`·`테스트 검증` 성공을 기다리지 않음 | `frontend_dev_<short SHA>` | `frontend_latest_development` |
 | Admin Dashboard | `main`의 `ci planet scale` 성공 후 `workflow_run`; 성공한 run의 정확한 `head_sha` checkout | `dashboard_dev_<short SHA>` | `dashboard_latest_development` |
 
-각 workflow는 source commit에 고정된 `git.environment-variables` submodule을 checkout해 환경 파일과 서명 키 경로를 사용하고, 이미지를 `linux/arm64`로 build/push한 뒤 Cosign key로 서명한다. Image Updater가 mutable 태그의 새 OCI index digest를 발견하면 개발 overlay의 `digest:`를 갱신하고, Argo CD가 그 GitOps revision을 sync해 rollout한다.
+각 workflow는 source commit에 고정된 `git.environment-variables` submodule을 checkout해 환경 파일과 서명 키 경로를 사용하고, 이미지를 `linux/arm64`로 빌드한 뒤 5.3절의 서명·검증·채널 승격 순서를 따른다. Image Updater가 mutable 태그의 새 OCI index digest를 발견하면 개발 overlay의 `digest:`를 갱신하고, Argo CD가 그 GitOps revision을 sync해 rollout한다.
+
+Dashboard의 `ci` job은 dependency 설치와 `pnpm build`를 실행한다. lint는 주석 상태이며 단위 테스트와 E2E를 실행하지 않으므로, CI 성공을 전체 테스트 통과로 표현하지 않는다. [Dashboard CI 코드][dashboard-ci]
 
 세 개발 workflow는 모두 `cancel-in-progress: true`인 저장소별 concurrency group을 사용한다. 연속된 `main` 변경에서는 이전 개발 배포가 취소될 수 있으므로, 취소된 run을 실패 배포로 단정하지 말고 각 저장소의 최신 `main` SHA를 기준으로 CI와 deploy run을 함께 추적한다. 특히 Frontend는 배포가 CI와 병렬로 시작하므로 Actions 성공 순서가 품질 gate 순서를 뜻하지 않는다.
 
@@ -89,8 +99,9 @@ flowchart LR
 | `release_date` | 실제 달력의 `YYYY-MM-DD` | `2026-08-29` |
 | `sequence` | 1 이상의 정수 | `2` |
 | `deployment_mode` | Backend에만 존재: `both`, `product`, `admin` | `both` |
+| `release_type` | Admin Dashboard에만 존재: `standard`, `hotfix` | `standard` |
 
-Frontend와 Admin Dashboard는 `release_date`, `sequence`만 받고 서비스가 고정된다.
+Frontend와 Admin Dashboard는 서비스가 고정된다. 아래 절차는 표준 릴리즈이며 Dashboard 핫픽스는 5.6절을 따른다.
 
 workflow는 현재 `origin/main`을 고정한 뒤 다음 구조를 만든다.
 
@@ -102,20 +113,21 @@ workflow는 현재 `origin/main`을 고정한 뒤 다음 구조를 만든다.
 - Release PR: base는 일회용 release branch, head는 `main`
 - PR body: source SHA, release key, Backend mode 또는 FE service의 사람이 읽는 값과 기계 검증용 marker
 
-PR에서 source, key, mode/service와 `changed files = 0`을 확인한 다음 merge한다. Release PR은 일반적인 코드 PR과 방향이 반대다. `main`을 고정된 release branch로 merge하여 “이 main SHA의 이 애플리케이션 또는 Backend mode를 운영에 내보낸다”는 사건을 만든다.
+PR 생성 후 source, key, mode/service와 `changed files = 0`을 확인하고, 실제 배포 source SHA와 연결된 CI를 확인한 다음 merge한다. 빈 release commit의 부모에 대한 CI를 근거로 삼는 경우에는 부모 SHA와 source SHA의 tree가 같다는 검증도 함께 남긴다. 다른 SHA의 성공만으로 대체하지 않는다. 현재 표준 생성·병합·배포 workflow는 CI 성공을 조회하는 자동 gate가 아니므로 이 확인은 운영자가 수행한다.
+
+Release PR은 일반적인 코드 PR과 방향이 반대다. `main → releases/<key>` 병합으로 “이 main SHA의 이 애플리케이션 또는 Backend mode를 운영에 내보낸다”는 사건을 만든다.
 
 빈 release commit도 `main` push이므로 일반 개발 경로를 함께 trigger한다. 운영 Release PR merge와 별개로, Backend와 Admin Dashboard는 그 source의 CI 성공 뒤 개발 배포가 시작되고 Frontend는 빈 commit push 즉시 개발 배포가 시작된다.
 
 ### 5.2 승인 없는 merge 계약
 
-현재 세 Release PR workflow는 별도 reviewer approval을 요구하지 않는다.
+현재 세 표준 Release PR workflow는 별도 reviewer approval을 요구하지 않는다.
 
-- Backend의 현재 GitHub ruleset은 `required_approving_review_count=0`이다. 두 FE 저장소의 merged workflow에도 approval gate가 없다.
 - Backend `release_pr_pilot_merged.yml`과 두 FE 저장소의 `release_pr_merged.yml`은 review/approver를 조회하지 않는다.
 - 따라서 merge 버튼을 누를 수 있는 권한자가 merge하면 운영 배포 의사가 확정된다.
 - “approval이 없으므로 자동 배포”가 아니라, **명시적 merge가 유일한 사람 gate**다.
 
-Backend의 일반 `main` 변경에는 active ruleset이 PR과 strict `product-ci-final-build`를 요구하고 merge method를 rebase로 제한한다. 다만 조직 관리자 bypass가 있으며, 세 저장소 모두 Release PR의 base는 `main`이 아니라 `releases/**`다. 따라서 일반 `main` 보호 규칙이 Release PR 승인 정책까지 대신한다고 가정하지 말고, 권한 통제와 merge 전 확인 절차를 workflow 검증만큼 중요하게 취급한다.
+ruleset, branch protection, reviewer 요구와 bypass 권한은 실행 시점에 별도로 확인한다. 2026.08.29 Backend의 구체적인 보호 규칙은 12절의 당시 기록으로만 남긴다. 표준 Release PR의 base는 `main`이 아니라 `releases/**`이므로 일반 `main` 보호 규칙이 Release PR까지 보호한다고 가정하지 않는다.
 
 ### 5.3 merge 뒤 자동 안전장치
 
@@ -130,10 +142,14 @@ merge event를 받은 `release PR deployment`는 배포 전에 다음을 다시 
 7. base, source, merge commit의 tree가 같은지 확인한다.
 8. source SHA가 현재 `origin/main`의 ancestor인지 release gate에서 다시 확인한다.
 9. key의 날짜·sequence를 검증하고, Backend는 mode allowlist도 검증한다.
-10. Backend는 선택한 모듈만, Frontend와 Admin Dashboard는 해당 단일 앱을 build하며 이미지 build/push가 성공해야 handoff한다.
+10. Backend는 선택한 모듈만, Frontend와 Admin Dashboard는 해당 단일 앱을 build하며 아래 이미지 승격과 채널 digest 재확인이 성공해야 handoff한다.
 11. 배포 workflow 성공 뒤에만 일회용 release branch를 삭제한다.
 
 생성 workflow도 같은 release branch가 이미 존재하거나 같은 base/head의 열린 PR이 있으면 실패한다. 원격 branch·commit·PR을 일부 만든 뒤 실패했을 때는 자동 삭제하지 않고 수동 점검을 요구하여, 잘못된 cleanup으로 정상 ref를 지우지 않도록 한다.
+
+Backend·Frontend·Dashboard의 공용 image action은 `immutable 태그 push → digest 확인 → cosign 서명 → 서명 검증 → 동일 digest를 채널 태그로 승격 → 채널 digest·서명 재검증` 순서를 사용한다. 취약점 scan이나 별도 quarantine 저장소에서 public 저장소로 복사하는 경로는 구현되어 있지 않다. 승격 전에 실패하면 해당 action은 채널을 바꾸지 않지만 immutable 이미지는 이미 존재할 수 있다. 승격 이후 재검증이 실패해도 채널을 자동 복구하지 않으므로 실제 태그 상태를 확인한다. [Backend action][backend-action], [Frontend action][frontend-action], [Dashboard action][dashboard-action]
+
+캐시 export는 승격 뒤에 분리되어 실패를 허용하며, 운영 caller는 `cache-export: 'false'`로 끈다. Release PR handoff는 채널이 build 결과와 같은 digest인지 다시 확인하고 Image Updater에 처리를 맡긴다. 이 단계는 GitOps 반영이나 Pod 준비 완료까지 기다리지 않는다.
 
 ### 5.4 Backend modes
 
@@ -145,7 +161,9 @@ merge event를 받은 `release PR deployment`는 배포 전에 다음을 다시 
 
 예를 들어 key `2026-08-29/2`는 version `2026.08.29.2`와 태그 `product_2026.08.29.2`, `admin_2026.08.29.2`를 만든다. 선택되지 않은 모듈의 build/image job은 skip되며 기존 digest는 유지된다.
 
-현재 release build는 선택 모듈에 대해 Gradle `build -x test`를 실행한다. 테스트 증거는 release build 자체가 아니라 source가 main에 들어올 때의 CI에서 확보하는 구조다. Release PR을 너무 빨리 merge하거나 admin bypass로 검증되지 않은 main을 만들지 않는다.
+현재 release build는 선택 모듈에 대해 Gradle `build -x test`를 실행한다. 테스트 증거는 5.1절의 실제 source/tree에 연결된 CI에서 확보한다.
+
+`both`에서도 Product와 Admin 이미지는 각 action이 따로 승격한다. 한쪽 승격 후 다른 쪽이 실패하면 부분 배포가 가능하며, handoff가 실패해도 이미 움직인 채널은 자동 복구되지 않는다. 저장소 전체나 두 서비스 전체에 걸친 원자성을 보장하지 않으므로 앱별 이전·현재 digest를 기록한다. [Backend 운영 workflow][backend-release]
 
 ### 5.5 Frontend와 Admin Dashboard
 
@@ -154,7 +172,25 @@ merge event를 받은 `release PR deployment`는 배포 전에 다음을 다시 
 | `bottle-note-frontend` | `release(frontend): YYYY-MM-DD/N` | `frontend_YYYY.MM.DD.N` | `frontend_latest_production` |
 | `admin-dashboard` | `release(dashboard): YYYY-MM-DD/N` | `dashboard_YYYY.MM.DD.N` | `dashboard_latest_production` |
 
-두 workflow는 release PR에서 전달된 full source SHA를 checkout하고 그 commit에 고정된 `git.environment-variables` submodule의 SOPS 환경 파일로 build한다. Release PR 경로에서는 immutable 태그와 production latest를 함께 push하고 Image Updater에 handoff한다. 기존 GitHub Release published 호환 경로는 별도 immutable 태그를 만들고 overlay를 직접 수정하므로 현재 표준 운영 경로로 사용하지 않는다.
+두 workflow는 Release PR에서 전달된 full source SHA를 checkout하고 그 commit에 고정된 `git.environment-variables` submodule의 SOPS 환경 파일로 build한다. 공용 Docker action 디렉터리는 실행 시점의 `main`에서 갱신하므로 배포 소스 SHA와 빌드 절차를 제공하는 SHA를 구분한다. 이미지는 5.3절의 검증 후 production latest로 승격한다. [Frontend 운영 workflow][frontend-release], [Dashboard 운영 workflow][dashboard-release]
+
+기존 GitHub Release published 호환 경로는 별도 immutable 태그를 만들고 overlay를 직접 수정하므로 현재 표준 운영 경로로 사용하지 않는다. Backend와 Frontend에는 Dashboard와 같은 전용 핫픽스 생성·검증 workflow가 없다.
+
+### 5.6 Admin Dashboard 핫픽스
+
+1. `main`에서 `release_pr_create.yml`을 `release_type=hotfix`로 실행한다. 표준·핫픽스는 같은 key의 immutable 태그를 사용하므로 `releases/<key>`, `hotfixes/<key>`와 해당 이미지 태그가 모두 없는 key를 선택한다.
+2. 생성기는 최근 표준·핫픽스 Release PR run 중 검증, gate, build, handoff, branch 삭제가 모두 성공한 run을 고른다. 대응 PR의 배포 source에서 `hotfixes/<key>`를 만든다. 이는 **마지막 Actions 성공 소스**이며 운영 Pod의 revision/digest를 조회한 값이 아니다. rollout 지연이나 rollback 여부는 별도로 확인해 실제 운영과 맞는지 판단한다.
+3. 그 base에서 필요한 수정만 만든 `hotfix/<name>`을 head로, `hotfixes/<key>`를 base로 PR을 연다. 생성기 summary의 source/key/service/type/base key/base source marker를 사용하고 source marker를 최종 검토 head SHA로 갱신한다.
+4. `hotfix_pr_merged.yml`은 `pull_request_target`의 merged event에서 변경 파일 1개 이상, 후보 head의 성공한 `ci`, base marker와 실제 base, 두 부모가 base·candidate인 merge commit, 결정적인 merge tree를 검증한다. 배포할 `source_sha`는 후보 head가 아니라 **실제 merge SHA**다.
+5. 공용 운영 workflow로 이미지 서명·검증·승격·handoff를 수행하고 성공 후 일회용 `hotfixes/<key>`를 삭제한다. 수정 사항을 main에 자동 역병합하거나 forward-port하는 단계는 없다. 별도 일반 PR로 main 반영을 완료해야 다음 표준 릴리즈가 수정을 되돌리지 않는다.
+
+`hotfixes/**`는 과거 release branch의 `releases/**` workflow 필터와 충돌하지 않도록 분리한 namespace다. 생성·검증 구현은 [생성기][dashboard-create]와 [전용 게이트][dashboard-hotfix]를 따른다. 2026.09.05 감사 당시 새 전용 workflow 실행은 0건이므로 실제 성공 경로로 검증되었다고 표현하지 않는다.
+
+### 5.7 Batch와 모바일
+
+Batch는 `deploy_batch.yml`에 정확한 `X.Y.Z`와 환경을 입력해 실행하며, production은 main에서만 허용한다. GitHub Environment를 사용하지만 2026.09.05 API 조회의 `Production.protection_rules`는 빈 배열이므로 별도 reviewer 승인 대기가 있다고 가정하지 않는다. `batch_X.Y.Z`를 발행하고 대상 overlay를 직접 Git write-back한다. Image Updater의 웹서비스 채널 승격 경로에 포함되지 않는다. 이미지 발행 뒤 GitOps 갱신이 실패해도 해당 버전의 태그는 이미 사용되었을 수 있다. 태그를 재사용하지 말고 Registry와 GitOps 상태를 확인한 뒤 새 버전으로 복구한다. 복구 시에는 마지막 정상 이미지와 GitOps 선언을 함께 확인하고, 이미 실행한 작업이나 DB 변경이 이미지 롤백으로 되돌아간다고 가정하지 않는다. [Batch workflow][backend-batch]
+
+모바일 Android는 라벨 조건을 충족한 PR 이벤트 또는 수동 dispatch로 빌드하고 Google Play `internal` track에 `draft`로 업로드하는 별도 흐름이다. 웹 Release PR·Registry latest·Image Updater·Kubernetes 완료 기준을 적용하지 않는다. workflow 성공도 스토어 운영 공개 완료를 뜻하지 않으며 Play 업로드 결과와 track·status를 따로 확인한다. [Android workflow][mobile-android]
 
 ## 6. 태그, digest, write-back, Argo
 
@@ -175,7 +211,7 @@ docker buildx imagetools inspect \
 
 `docker manifest inspect`의 `config.digest`는 OCI index digest가 아니므로 Kubernetes의 `image@sha256:...`와 직접 비교하지 않는다.
 
-FE Release PR workflow는 `source_sha`를 checkout하지만 공용 image action의 `GIT_COMMIT`과 OCI revision annotation은 현재 event의 `github.sha`, 즉 PR merge commit을 기록한다. 따라서 Frontend는 source `09e9d784...`와 annotation `f1864c79...`, Admin Dashboard는 source `cd2aec9d...`와 annotation `96c91a0c...`처럼 값이 다르다. 배포 source는 release gate와 PR head SHA로 판정하고, OCI annotation은 merge-event 추적 정보로 별도 기록한다.
+현재 Frontend·Dashboard caller는 확정 `source-sha`를 공용 action에 전달하며 action은 그 값을 `GIT_COMMIT`과 OCI revision annotation에 기록한다. 표준 릴리즈는 빈 release commit의 source SHA, Dashboard 핫픽스는 검증된 merge SHA가 기준이다. 2026.08.29에는 FE source와 event의 merge SHA가 다르게 기록되었지만 그 동작은 현재 계약이 아니다. 배포 source, workflow/action을 제공한 SHA, 이미지 digest를 각각 기록한다. [Frontend action][frontend-action], [Dashboard action][dashboard-action]
 
 ### 6.2 FE submodule과 GitOps main의 관계
 
@@ -198,7 +234,7 @@ FE Release PR workflow는 `source_sha`를 checkout하지만 공용 image action�
 
 따라서 Image Updater가 Registry에서 새 digest를 찾으면 overlay의 `newTag`는 환경별 `latest`로 유지하고 `digest:`만 바꾼 커밋을 push한다. 커밋 작성자는 `argocd-image-updater`이며, 이 커밋이 감사와 복구의 SSOT다.
 
-`deploy_development_applications.yml`의 step summary에는 아직 `5 minute interval`이라고 적혀 있지만 실제 Deployment arg와 2026.08.29 live log는 모두 30초다. 운영 판단은 30초를 기준으로 하되 Registry 조회, Git push, Argo repository polling과 rollout 시간이 추가된다는 점을 고려한다.
+30초는 Image Updater의 조회 주기이며 전체 배포 완료 시간은 아니다. Registry 조회, Git push, Argo repository refresh와 rollout 시간이 추가된다. 설정 근거는 [Image Updater Deployment][image-updater-deployment]와 [BottleNote updater 선언][image-updater-config]이며, 2026.08.29 live 관찰은 12절에 별도로 남긴다.
 
 ### 6.4 Argo CD 계약
 
@@ -224,7 +260,7 @@ gh pr view <pr-number> --repo bottle-note/bottle-note-api-server \
   --json baseRefName,headRefName,headRefOid,mergeCommit,changedFiles,additions,deletions,body
 ```
 
-확인할 값은 release key, full source SHA, 저장소와 Backend mode, build/push 결과, image digest, handoff 결과다. branch 삭제 실패는 rollout 실패와 다른 cleanup 실패이므로 따로 판정한다.
+확인할 값은 release key, full source SHA, 저장소와 Backend mode, 해당 source/tree의 CI, immutable push·서명·검증·채널 승격 결과, image digest, handoff 결과다. branch 삭제 실패는 rollout 실패와 다른 cleanup 실패이므로 따로 판정한다.
 
 Frontend와 Admin Dashboard는 같은 workflow 이름을 각 저장소에서 조회한다.
 
@@ -256,7 +292,7 @@ immutable 태그와 환경 `latest`의 최상위 digest가 같은지, 최신 Git
 
 ### 7.3 Image Updater와 Argo
 
-클러스터 접근이 설정된 셸에서 실행한다. 이 환경에서는 `node-1`을 통해 실제 확인했다.
+클러스터 접근이 허가되고 설정된 셸에서 실행한다. 12절의 2026.08.29 실증은 `node-1`을 통해 수행한 기록이며 이번 원격 감사에서는 실행하지 않았다.
 
 ```bash
 kubectl get imageupdater -n argocd
@@ -291,15 +327,15 @@ HTTP 200은 마지막 확인 단계이지 단독 배포 증거가 아니다. 새
 
 | 관찰 | 의미 | 우선 확인과 대응 |
 |---|---|---|
-| Backend/Admin Dashboard main CI 실패 | 개발 이미지 발행 gate 미통과 | 실패한 unit/rule/integration/final build를 수정한다. 배포 workflow를 억지로 수동 실행하지 않는다. |
+| Backend/Admin Dashboard main CI 실패 | 개발 이미지 발행 gate 미통과 | Backend는 unit/rule/integration/final build, Dashboard는 dependency 설치·build 결과를 확인한다. 배포 workflow를 억지로 수동 실행하지 않는다. |
 | Frontend main build/test CI 실패 | 품질 검증 실패지만 현재 개발 deploy는 별도 `push` trigger로 이미 실행됐을 수 있음 | deploy run과 실제 digest를 함께 확인하고, 실패 source가 배포됐다면 수정 commit 또는 승인된 rollback으로 복구한다. |
 | Release PR create가 일부 원격 리소스 생성 뒤 실패 | branch/commit/PR 일부가 남았을 수 있음 | step summary의 ref와 PR URL을 조회한다. 자동 cleanup이 비활성화되어 있으므로 실제 상태 확인 전 삭제하지 않는다. |
-| image build/push 실패 | mutable 태그와 digest handoff가 완성되지 않음 | 실패 job과 Registry 태그를 확인한다. 같은 key의 불완전 재사용보다 새 sequence로 재실행한다. |
+| 이미지 발행·검증·승격 중 실패 | 실패 단계에 따라 immutable만 존재하거나 채널이 이미 바뀌었을 수 있음 | 앱별 이전·현재 digest와 승격 여부를 확인한다. Backend `both`는 부분승격도 확인한다. 같은 key를 임의 재사용하지 않는다. |
 | Actions 성공, GitOps commit 없음 | Image Updater가 아직 감지하지 못했거나 Registry/Git 인증·allowTags·platform 문제 | 30초 이상 기다린 뒤 Image Updater log의 `errors`, eligible tag, old/new digest, git push를 본다. |
 | GitOps main은 새 commit, Argo revision은 이전 commit | Git write-back 뒤 Argo repository refresh/sync 지연 | 잠시 관찰하고 revision을 다시 비교한다. 긴급하고 권한이 있을 때만 Application hard refresh를 수행한다. |
 | Argo `OutOfSync` 또는 `Degraded` | render/sync/resource health 문제 | Application conditions, operation message, resource events, probe와 Pod log를 순서대로 확인한다. |
 | Deployment image는 새 digest, old Pod가 남음 | rollout 진행 중 또는 readiness 실패 | `updatedReplicas`, `availableReplicas`, ReplicaSet, events, readiness log를 확인한다. |
-| branch 삭제만 실패 | 배포 성공 뒤 cleanup 실패 가능 | 배포 증거를 먼저 보존하고 해당 일회용 `releases/**` ref만 수동 정리한다. |
+| branch 삭제만 실패 | 이미지 승격 뒤 cleanup 실패 가능 | 배포 증거를 먼저 보존하고 해당 일회용 `releases/**` 또는 `hotfixes/**` ref만 승인된 범위에서 정리한다. Dashboard의 다음 핫픽스 base 선정에도 영향을 줄 수 있다. |
 
 Application hard refresh는 cluster 변경이므로 권한 있는 운영자만 수행한다.
 
@@ -352,7 +388,9 @@ AI는 다음 계약을 기본값으로 따른다.
 8. 실패 시 test/guard를 제거하거나 mutable 태그를 임의로 덮어써 우회하지 않는다.
 9. 완료 보고에는 저장소, run/PR, source SHA, Backend mode, immutable tag, digest, GitOps revision, Argo 상태, replica/Pod 상태, HTTP 결과와 미검증 항목을 포함한다.
 
-## 12. 2026.08.29 현행 증거
+## 12. 2026.08.29 과거 실증 기록
+
+이 절의 SHA, digest, 상태와 “현재”, “이번 확인”은 모두 2026.08.29 당시를 뜻한다. 당시 Registry·runtime 관찰을 보존한 기록이며 현재 workflow 구현·CI·운영 상태의 증거로 재사용하지 않는다.
 
 ### 12.1 운영 Backend release
 
@@ -400,12 +438,47 @@ AI는 다음 계약을 기본값으로 따른다.
 - GitHub Release published 호환 경로도 세 애플리케이션 workflow에 남아 있다. Backend `backend/vX.Y.Z`, Frontend `frontend/vX.Y.Z`, Admin Dashboard `dashboard/vX.Y.Z` 경로는 각 immutable tag로 production overlay를 직접 갱신하고 production latest를 발행하지 않는 반면, 현재 Image Updater는 `*_latest_production` digest를 지속 추적한다. 두 제어 방식이 충돌해 이전 latest digest로 재수렴할 가능성이 있으므로, **현 표준 운영에서는 GitHub Release published 경로를 사용하지 않는다.** 이 충돌은 코드·매니페스트 비교에서 확인한 위험이며 실제 재현 배포는 하지 않았다.
 - 전용 Backend rollback workflow와 approval 없는 Backend Release PR의 첫 운영 실적은 아직 없다. Frontend PR #815와 Admin Dashboard PR #106은 approval 없는 merge와 운영 배포 실적을 제공한다.
 
-## 13. 완료 체크리스트
+## 13. 2026.09.05 원격 감사 기록
 
-- [ ] source full SHA와 main ancestry 확인
+### 13.1 고정한 main SHA
+
+6개 원격 저장소의 main을 먼저 고정하고 해당 SHA의 workflow·action·선언을 읽었다. 아래 k8s-platform SHA는 이 문서 갱신 전 감사 기준이다.
+
+| 저장소 | 감사 기준 main SHA |
+|---|---|
+| [bottle-note-api-server](https://github.com/bottle-note/bottle-note-api-server/tree/30639b1340d698d3543a0c92807d34fdd803aed1) | `30639b1340d698d3543a0c92807d34fdd803aed1` |
+| [bottle-note-frontend](https://github.com/bottle-note/bottle-note-frontend/tree/a3531cce632e08da71e7cb6c0774f405fcc46d20) | `a3531cce632e08da71e7cb6c0774f405fcc46d20` |
+| [admin-dashboard](https://github.com/bottle-note/admin-dashboard/tree/1595fcc7fee3dfcb34757cf4a3b3ae2de66a5685) | `1595fcc7fee3dfcb34757cf4a3b3ae2de66a5685` |
+| [bottle-note-app](https://github.com/bottle-note/bottle-note-app/tree/dd5d67bd07b7ef740e9fbc2b43458c162ec23814) | `dd5d67bd07b7ef740e9fbc2b43458c162ec23814` |
+| [environment-variables](https://github.com/bottle-note/environment-variables/tree/1aeab7df105ae538896ae18deb8289abbf428ece) | `1aeab7df105ae538896ae18deb8289abbf428ece` |
+| [k8s-platform](https://github.com/Whale0928/k8s-platform/tree/96c1c84dd809b1aef553baf9fc84d7382f43b792) | `96c1c84dd809b1aef553baf9fc84d7382f43b792` |
+
+### 13.2 실제 Actions와 남은 확인
+
+아래 웹서비스 릴리즈는 2026.09.04 실행이며 source SHA는 각각 13.1절 main SHA와 같다. run 전체 상태와 관련 job을 확인했고 legacy GitHub Release 전용 job의 조건상 skip은 실패와 구분했다.
+
+| 서비스 | PR·Actions 관찰 결과 |
+|---|---|
+| Backend | [PR #744](https://github.com/bottle-note/bottle-note-api-server/pull/744), [운영 33847251560](https://github.com/bottle-note/bottle-note-api-server/actions/runs/33847251560)의 관련 7개 job이 성공했다. 같은 SHA의 [CI 33847222410](https://github.com/bottle-note/bottle-note-api-server/actions/runs/33847222410), [개발 33847555931](https://github.com/bottle-note/bottle-note-api-server/actions/runs/33847555931)도 성공했다. |
+| Frontend | [PR #817](https://github.com/bottle-note/bottle-note-frontend/pull/817), [운영 33846847945](https://github.com/bottle-note/bottle-note-frontend/actions/runs/33846847945)가 성공했다. 같은 SHA의 [빌드 33846822885](https://github.com/bottle-note/bottle-note-frontend/actions/runs/33846822885)와 [Jest 33846822796](https://github.com/bottle-note/bottle-note-frontend/actions/runs/33846822796)(76 suites, 369 tests)가 성공했다. 운영 종료 07:05:07 UTC가 Jest 종료 07:08:33 UTC보다 빨라 테스트를 기다리는 자동 gate는 아니었음을 확인했다. |
+| Admin Dashboard | [PR #114](https://github.com/bottle-note/admin-dashboard/pull/114), [운영 33846115171](https://github.com/bottle-note/admin-dashboard/actions/runs/33846115171)의 검증·gate·build·handoff·branch 삭제 5개 job이 성공했다. 실제 build 로그에서 확정 source의 checkout·OCI revision·GIT_COMMIT과 서명·검증 후 채널 승격을 확인했다. 같은 SHA의 [CI 33846065760](https://github.com/bottle-note/admin-dashboard/actions/runs/33846065760), [개발 33846226588](https://github.com/bottle-note/admin-dashboard/actions/runs/33846226588)도 성공했다. |
+
+Dashboard의 새 `hotfix_pr_merged.yml`은 실행 0건이다. 이전 [핫픽스 PR #111](https://github.com/bottle-note/admin-dashboard/pull/111)의 구 경로 [run 33374742687](https://github.com/bottle-note/admin-dashboard/actions/runs/33374742687)은 후보 `af76f775b2c6afcf0b15723476b6d4ff9a214a82`, merge `e44e43e37bed16b5da948ed0d283cbd2e8658b85`에서 build job이 실패하고 handoff·삭제는 skipped였다. 구 로그는 HTTP 410으로 조회되지 않았다. 후속 [#113](https://github.com/bottle-note/admin-dashboard/pull/113)의 사고 설명은 PR 기록이며 이번 runtime 실증이 아니다. 누락된 main 반영은 별도 [#112](https://github.com/bottle-note/admin-dashboard/pull/112)로 병합되었다.
+
+Android 최신 [run 32936768859](https://github.com/bottle-note/bottle-note-app/actions/runs/32936768859)은 2026.08.26 `main`을 대상으로 한 PR 종료 이벤트에서 라벨 조건으로 skipped였다. main push나 수동 dispatch 실행이 아니다. 최근 성공 [run 32625928275](https://github.com/bottle-note/bottle-note-app/actions/runs/32625928275)은 2026.08.23 source `e1f778df16f92fb8ada028b88bfaf93ad7acd83e`에서 Play internal draft 업로드 step이 성공한 기록이다. Batch 최근 성공 [run 33234473944](https://github.com/bottle-note/bottle-note-api-server/actions/runs/33234473944)은 2026.08.29 source `aa53d43d1d3a318320e962792d8a3c2dca406a04`이며 최신 이미지 action 개선 이전이므로 현재 Batch 경로의 실증으로 대체하지 않는다.
+
+운영 digest의 최근 [GitOps write-back `2c270024`](https://github.com/bottle-note/environment-variables/commit/2c27002407d7c59f6b11726614623855809adf15)은 2026.09.04 07:10:15 UTC의 production overlay 기록이다. 30초 주기, 네 웹서비스의 digest write-back, `linux/arm64`, `environment-variables/main`을 따르는 Argo 선언도 위 고정 SHA에서 확인했다. Registry 현재 상태, Argo sync, Pod와 HTTP는 이번 감사에서 확인하지 않았다.
+
+감사 시점에 릴리즈 브랜치 생성 규칙을 문서화하는 Backend [#745](https://github.com/bottle-note/bottle-note-api-server/pull/745)(head `799e86ab7676ec12fd4b685c57d491a65861a203`), Frontend [#818](https://github.com/bottle-note/bottle-note-frontend/pull/818)(head `f80c30ed0680027eb224937f41adfece0e9a7192`), Dashboard [#115](https://github.com/bottle-note/admin-dashboard/pull/115)(head `ce4b10f90dd313552d0613449d8badfa01774733`)는 모두 OPEN이었다. 이 가이드에는 브랜치 수동 생성 금지를 새 운영 지침으로 반영하지만 해당 PR들이 이미 병합되었다는 뜻은 아니다. 모바일의 열린 PR은 없었다.
+
+## 14. 웹서비스 완료 체크리스트
+
+- [ ] source full SHA와 source/tree에 연결된 CI 확인
+- [ ] 표준은 main ancestry, Dashboard 핫픽스는 base·candidate·실제 merge SHA 확인
 - [ ] 저장소, release key와 Backend mode 확인
-- [ ] Release PR zero diff와 marker 확인
-- [ ] Actions gate/build/image/handoff 성공
+- [ ] 표준 Release PR zero diff와 marker, 핫픽스는 검토한 변경과 전용 marker 확인
+- [ ] Actions gate/build/서명/검증/채널 승격/handoff 성공
+- [ ] Backend `both`는 앱별 승격 상태, Dashboard 핫픽스는 별도 main 반영 PR 확인
 - [ ] immutable tag와 환경 latest의 OCI index digest 일치
 - [ ] Image Updater old/new digest와 Git write-back 성공
 - [ ] `environment-variables/main` 기대 commit 확인
@@ -414,3 +487,17 @@ AI는 다음 계약을 기본값으로 따른다.
 - [ ] Pod ready, restart, imageID 확인
 - [ ] liveness/readiness 및 필요한 실제 기능 확인
 - [ ] 실패·지연·미검증 항목 명시
+
+[backend-action]: https://github.com/bottle-note/bottle-note-api-server/blob/30639b1340d698d3543a0c92807d34fdd803aed1/.github/actions/docker-build-push/action.yml
+[backend-release]: https://github.com/bottle-note/bottle-note-api-server/blob/30639b1340d698d3543a0c92807d34fdd803aed1/.github/workflows/deploy_release_applications.yml
+[backend-batch]: https://github.com/bottle-note/bottle-note-api-server/blob/30639b1340d698d3543a0c92807d34fdd803aed1/.github/workflows/deploy_batch.yml
+[frontend-action]: https://github.com/bottle-note/bottle-note-frontend/blob/a3531cce632e08da71e7cb6c0774f405fcc46d20/.github/actions/docker-build-push/action.yml
+[frontend-release]: https://github.com/bottle-note/bottle-note-frontend/blob/a3531cce632e08da71e7cb6c0774f405fcc46d20/.github/workflows/deploy_release_applications.yml
+[dashboard-action]: https://github.com/bottle-note/admin-dashboard/blob/1595fcc7fee3dfcb34757cf4a3b3ae2de66a5685/.github/actions/docker-build-push/action.yml#L222-L411
+[dashboard-release]: https://github.com/bottle-note/admin-dashboard/blob/1595fcc7fee3dfcb34757cf4a3b3ae2de66a5685/.github/workflows/deploy_release_applications.yml#L197-L302
+[dashboard-create]: https://github.com/bottle-note/admin-dashboard/blob/1595fcc7fee3dfcb34757cf4a3b3ae2de66a5685/.github/workflows/release_pr_create.yml#L294-L464
+[dashboard-hotfix]: https://github.com/bottle-note/admin-dashboard/blob/1595fcc7fee3dfcb34757cf4a3b3ae2de66a5685/.github/workflows/hotfix_pr_merged.yml#L139-L348
+[dashboard-ci]: https://github.com/bottle-note/admin-dashboard/blob/1595fcc7fee3dfcb34757cf4a3b3ae2de66a5685/.github/workflows/ci.yml
+[mobile-android]: https://github.com/bottle-note/bottle-note-app/blob/dd5d67bd07b7ef740e9fbc2b43458c162ec23814/.github/workflows/android-release.yml
+[image-updater-deployment]: https://github.com/Whale0928/k8s-platform/blob/96c1c84dd809b1aef553baf9fc84d7382f43b792/platform/image-manager/20-deployment.yaml
+[image-updater-config]: https://github.com/Whale0928/k8s-platform/blob/96c1c84dd809b1aef553baf9fc84d7382f43b792/platform/image-manager/51-bottlenote-production-imageupdater.yaml
