@@ -39,6 +39,7 @@ Personal Kubernetes platform infrastructure for all projects.
 | External-Secrets   | 1Password 시크릿 동기화           | amd64                              |
 | Image Updater      | 컨테이너 이미지 자동 업데이트      | amd64                              |
 | Container-Registry | OCI 컨테이너 레지스트리 (Zot)     | amd64                              |
+| Silo               | 공용 S3 호환 오브젝트 스토리지     | pve-pod-1 (500GiB 전용 디스크)      |
 | Uptime Kuma        | 서비스 상태 모니터링               | amd64                              |
 | Redis Operator     | Redis Replication/Cluster 관리   | arm64/amd64 (멀티아치)              |
 | Monitoring         | 통합 모니터링 (LGTM Stack)        | 비활성화                            |
@@ -66,7 +67,8 @@ k8s-platform/
     ├── image-manager/      # ArgoCD Image Updater
     ├── container-registry/ # Zot OCI Registry (amd64)
     ├── coredns/            # CoreDNS 설정
-    └── redis-operator/     # Redis Operator (Opstree v0.24.0)
+    ├── redis-operator/     # Redis Operator (Opstree v0.24.0)
+    └── silo/              # S3 호환 스토리지 (설치 절차는 하위 README 참고)
 ```
 
 ## Traffic Flow

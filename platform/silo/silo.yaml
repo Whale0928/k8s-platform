@@ -1,0 +1,168 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: silo
+spec:
+  type: ClusterIP
+  selector:
+    app: silo
+  ports:
+    - name: s3
+      port: 9000
+      targetPort: s3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: silo-console
+spec:
+  type: ClusterIP
+  selector:
+    app: silo
+  ports:
+    - name: console
+      port: 9001
+      targetPort: console
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: silo
+spec:
+  serviceName: silo
+  replicas: 1
+  selector:
+    matchLabels:
+      app: silo
+  template:
+    metadata:
+      labels:
+        app: silo
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        kubernetes.io/hostname: pve-pod-1
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        - name: verify-data-volume
+          # 본체와 같은 이미지의 기본 도구를 사용한다.
+          image: docker.io/pgsty/silo:RELEASE.2026-09-03T13-18-01Z@sha256:b616a0cf8cb281e7e6bb3c9b1fb53875b4016a2878223925541c18f82d6c5ca3
+          command: ["/bin/sh", "-ec"]
+          args:
+            - |
+              # 디스크가 빠진 뒤 남은 마운트 디렉터리에 쓰는 것을 방지한다.
+              test "$(cat /data/.silo-volume)" = "silo-data-v1"
+              capacity_bytes="$(df -B1 --output=size /data | tail -n 1 | tr -d ' ')"
+              test "$capacity_bytes" -ge 510027366400
+              test -w /data
+              # FILE 환경변수의 파일이 없으면 기본 계정으로 시작할 수 있으므로 차단한다.
+              test -s /run/secrets/silo/root-user
+              test "$(wc -c < /run/secrets/silo/root-password)" -ge 32
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: credentials
+              mountPath: /run/secrets/silo
+              readOnly: true
+      containers:
+        - name: silo
+          image: docker.io/pgsty/silo:RELEASE.2026-09-03T13-18-01Z@sha256:b616a0cf8cb281e7e6bb3c9b1fb53875b4016a2878223925541c18f82d6c5ca3
+          args: ["server", "/data", "--address", ":9000", "--console-address", ":9001"]
+          env:
+            - name: TZ
+              value: Asia/Seoul
+            - name: HOME
+              value: /tmp
+            - name: MINIO_BROWSER_REDIRECT_URL
+              value: https://slio.dead-whale.org
+            - name: MINIO_ROOT_USER_FILE
+              value: /run/secrets/silo/root-user
+            - name: MINIO_ROOT_PASSWORD_FILE
+              value: /run/secrets/silo/root-password
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          ports:
+            - name: s3
+              containerPort: 9000
+            - name: console
+              containerPort: 9001
+          startupProbe:
+            httpGet:
+              path: /minio/health/live
+              port: s3
+            periodSeconds: 2
+            timeoutSeconds: 2
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /minio/health/ready
+              port: s3
+            periodSeconds: 5
+            timeoutSeconds: 2
+          livenessProbe:
+            httpGet:
+              path: /minio/health/live
+              port: s3
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 2Gi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: credentials
+              mountPath: /run/secrets/silo
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: credentials
+          secret:
+            secretName: silo-root
+            defaultMode: 0440
+            items:
+              - key: root-user
+                path: root-user
+              - key: root-password
+                path: root-password
+        - name: tmp
+          emptyDir:
+            sizeLimit: 128Mi
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: local-disk
+        resources:
+          requests:
+            storage: 500Gi
