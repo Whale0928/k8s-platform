@@ -34,6 +34,11 @@ patches:
       kind: Gateway
       name: main-gateway
       namespace: envoy-gateway-system
+    path: patches/cheese-lake.yaml
+  - target:
+      kind: Gateway
+      name: main-gateway
+      namespace: envoy-gateway-system
     path: patches/dead-whale.yaml
   - target:
       kind: Gateway
