@@ -10,4 +10,5 @@ k8s-platform의 아키텍처 결정 기록. [Nygard 형식](https://cognitect.co
 
 | # | 제목 | 상태 |
 |---|---|---|
-| [0001](0001%20shared%20object%20storage.md) | 공용 오브젝트 스토리지를 pve-1에 세운다 | Accepted |
+| [0001](0001%20shared%20object%20storage.md) | 공용 오브젝트 스토리지를 pve-1에 세운다 | Superseded by 0002 |
+| [0002](0002%20SeaweedFS%20전환.md) | 공용 오브젝트 스토리지를 SeaweedFS로 전환한다 | Accepted, 배포 구성 검증 전 |

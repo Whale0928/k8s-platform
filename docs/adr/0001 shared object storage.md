@@ -1,8 +1,13 @@
 # ADR-0001: 공용 오브젝트 스토리지를 pve-1에 세운다
 
-- 상태: Accepted
+- 상태: Superseded (2026-09-08, SeaweedFS로 전환 결정)
 - 날짜: 2026-08-31
 - 변경: 2026-09-05, 실제 초기 할당을 500GiB로 조정하고 콘솔을 `slio.dead-whale.org`로 공개한다.
+
+> 2026-09-08 사용자가 SeaweedFS로 전환하기로 결정했다. 아래 내용은 Silo를 선택했던
+> 당시의 검토 기록이며 현재 배포 지침이 아니다. Silo 배포와 외부 경로를 제거하고,
+> 500GiB 디스크는 `platform/storage/objdata.yaml`로 보존한다. 기존 SeaweedFS 평가와
+> 버전별 문제는 새 배포 전에 공식 문서와 현재 릴리스로 다시 검증한다.
 
 ## Context
 
