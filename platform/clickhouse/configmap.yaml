@@ -11,6 +11,31 @@ metadata:
   name: clickhouse-config
   namespace: clickhouse
 data:
+  storage.xml: |
+    <clickhouse>
+        <storage_configuration>
+            <disks>
+                <seaweedfs>
+                    <type>s3</type>
+                    <endpoint>http://seaweedfs-s3.seaweedfs.svc.cluster.local:8333/cheese-lake-clickhouse/clickhouse/</endpoint>
+                    <access_key_id from_env="SEAWEEDFS_ACCESS_KEY"/>
+                    <secret_access_key from_env="SEAWEEDFS_SECRET_KEY"/>
+                    <region>us-east-1</region>
+                    <metadata_path>/var/lib/clickhouse/disks/seaweedfs/</metadata_path>
+                </seaweedfs>
+            </disks>
+            <policies>
+                <seaweedfs_tiered>
+                    <volumes>
+                        <default><disk>default</disk></default>
+                        <cold><disk>seaweedfs</disk></cold>
+                    </volumes>
+                    <!-- 디스크 여유 공간에 따른 자동 이동도 비활성화한다. -->
+                    <move_factor>0</move_factor>
+                </seaweedfs_tiered>
+            </policies>
+        </storage_configuration>
+    </clickhouse>
   local.xml: |
     <clickhouse>
         <listen_host>0.0.0.0</listen_host>

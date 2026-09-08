@@ -9,6 +9,7 @@ resources:
   - namespace.yaml
   - pv.yaml
   - configmap.yaml
+  - seaweedfs-auth.yaml
   - clickhouse.yaml
 
 generators:

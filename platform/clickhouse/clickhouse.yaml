@@ -44,6 +44,16 @@ spec:
         - name: clickhouse
           image: clickhouse/clickhouse-server:26.7.3.19-alpine
           env:
+            - name: SEAWEEDFS_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: seaweedfs-s3
+                  key: access-key
+            - name: SEAWEEDFS_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: seaweedfs-s3
+                  key: secret-key
             - name: TZ
               value: Asia/Seoul
             - name: CLICKHOUSE_PASSWORD
@@ -63,6 +73,10 @@ spec:
             - name: postgresql
               containerPort: 9005
           volumeMounts:
+            - name: config
+              mountPath: /etc/clickhouse-server/config.d/storage.xml
+              subPath: storage.xml
+              readOnly: true
             - name: config
               mountPath: /etc/clickhouse-server/config.d/local.xml
               subPath: local.xml
