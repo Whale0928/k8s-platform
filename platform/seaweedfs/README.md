@@ -2,7 +2,7 @@
 
 SeaweedFS 4.45를 `pve-pod-1`의 500GiB local PV에서 실행한다. 이미지 태그와
 multi-arch digest를 함께 고정한다. StatefulSet 한 개 안에서 저장소 서버와 Admin을
-각각 컨테이너로 실행하며 ClickHouse 배포 설정은 변경하지 않는다.
+각각 컨테이너로 실행한다. ClickHouse의 S3 연결 설정은 `platform/clickhouse`에서 관리한다.
 
 | 항목 | 값 |
 |---|---|
@@ -21,8 +21,10 @@ multi-arch digest를 함께 고정한다. StatefulSet 한 개 안에서 저장�
 기존 로그인 정보와 웹사이트는 유지한다.
 
 `cheese-lake / SeaweedFS ClickHouse`에는 전용 접근키, 버킷, endpoint, region,
-path style과 향후 사용 가능한 `clickhouse/` prefix를 저장한다. 버킷 생성과 연결정보
-등록만 수행하며 ClickHouse 데이터 연동·이관·TTL 정책은 적용하지 않는다.
+path style과 `clickhouse/` prefix를 저장한다. ClickHouse는 이 인증정보를 별도
+ExternalSecret으로 읽어 `seaweedfs` 디스크와 `seaweedfs_tiered` 저장 정책을 등록한다.
+기존 테이블은 `default` 정책을 유지한다. 테이블 이관·TTL은 적용하지 않으며,
+`move_factor=0`으로 공간 부족에 따른 자동 이동도 비활성화한다.
 
 1Password 갱신에는 기존 `OP_SERVICE_ACCOUNT_TOKEN`과 공식 Python SDK를 사용한다.
 `op` CLI는 사용하지 않는다. 클러스터의 ExternalSecret은 두 볼트의 기존 Connect
@@ -75,9 +77,14 @@ EOF
 배포 후에는 Secret 동기화, PVC Bound, Pod 2/2 Ready, HTTPS 로그인, 파일 왕복과
 Pod 재생성 후 보존을 확인한다. 검증 객체만 삭제하고 기본 버킷 두 개는 유지한다.
 
-ClickHouse 26.7.3.19의 기존 치즈레이크 MergeTree 테이블 10개가 `default` 로컬
-정책을 사용하는 것을 조회했다. ClickHouse 설정·테이블·데이터를 변경하거나
-ClickHouse Pod를 재시작하지 않는다.
+로컬 ClickHouse 26.7.3.19에서 실제 S3에 2만 행 쓰기·읽기, 오래된 파티션 1만 행의
+수동 이동, 최근 1만 행의 로컬 유지, 로컬 재기동 후 행 수·체크섬 일치를 검증했다.
+테스트 데이터와 컨테이너는 정리했다. 대량 이관 성능은 별도 검증 대상이다.
+
+ClickHouse 연결 설정을 처음 반영할 때는 Pod가 재생성된다. 인증 Secret이 준비된
+뒤 배포하고, 복구 후 `system.disks`, `system.storage_policies`와 기존 테이블의
+`storage_policy`를 확인한다. 실제 테이블 정책 변경과 파티션 이동은 별도 DDL로
+수행하며, 1년 기준 자동 이동 규칙은 등록하지 않는다.
 
 ## 공식 근거
 

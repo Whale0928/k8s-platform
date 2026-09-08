@@ -10,3 +10,4 @@ metadata:
         path: ksops
 files:
   - ./clickhouse-secret.sops.yaml
+  - ./seaweedfs-op-token.sops.yaml
