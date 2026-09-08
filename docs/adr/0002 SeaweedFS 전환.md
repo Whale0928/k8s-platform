@@ -1,6 +1,6 @@
 # ADR 0002: 공용 오브젝트 스토리지를 SeaweedFS로 전환한다
 
-- 상태: Accepted, 배포 구성은 검증 전
+- 상태: Accepted, SeaweedFS 4.45 단일 호스트 배포
 - 날짜: 2026.09.08
 - 대체: [ADR 0001](0001%20shared%20object%20storage.md)
 
@@ -20,8 +20,13 @@ PV 선언은 `platform/storage/objdata.yaml`에서 관리한다.
 등록된 서비스 계정과 SDK로 확인하며 `op` CLI를 사용하지 않는다. 사용자가 기존
 도메인을 제거했으므로 새 도메인을 임의로 만들거나 기존 도메인을 재사용하지 않는다.
 
-SeaweedFS의 버전, 단일 호스트 구성, 데이터 디렉터리, S3 인증, Admin UI 인증과
-외부 노출 범위는 공식 문서와 실행 검증을 거쳐 별도 배포 변경으로 확정한다.
+SeaweedFS 4.45의 Master·Volume·Filer·S3와 Admin을 단일 StatefulSet에서 실행한다.
+Admin은 사용자가 등록한 `seaweed.dead-whale.org`로 공개하고 S3는 ClusterIP로
+제공한다. 구성과 검증 절차는 `platform/seaweedfs/README.md`에서 관리한다.
+
+기본 버킷은 `default`, 치즈레이크 전용 버킷은 `cheese-lake-clickhouse`다. 각 버킷의
+접근키를 분리하고 후자의 연결정보는 `cheese-lake / SeaweedFS ClickHouse`에 저장한다.
+사용자의 추가 지시에 따라 ClickHouse는 설정 조회만 수행하며 재시작하지 않는다.
 
 ## Consequences
 
