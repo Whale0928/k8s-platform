@@ -4,7 +4,9 @@ metadata:
   name: seaweedfs-admin
 spec:
   parentRefs:
-    - name: main-gateway
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: main-gateway
       namespace: envoy-gateway-system
       sectionName: https-dead-whale
   hostnames:
@@ -15,5 +17,8 @@ spec:
             type: PathPrefix
             value: /
       backendRefs:
-        - name: seaweedfs-admin
+        - group: ""
+          kind: Service
+          name: seaweedfs-admin
           port: 23646
+          weight: 1
