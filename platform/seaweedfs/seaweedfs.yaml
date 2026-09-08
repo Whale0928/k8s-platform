@@ -1,0 +1,243 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: seaweedfs-s3
+spec:
+  type: ClusterIP
+  selector:
+    app: seaweedfs
+  ports:
+    - name: s3
+      port: 8333
+      targetPort: 8333
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: seaweedfs-admin
+spec:
+  type: ClusterIP
+  selector:
+    app: seaweedfs
+  ports:
+    - name: admin
+      port: 23646
+      targetPort: 23646
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: seaweedfs
+spec:
+  serviceName: seaweedfs-s3
+  replicas: 1
+  selector:
+    matchLabels:
+      app: seaweedfs
+  template:
+    metadata:
+      labels:
+        app: seaweedfs
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        kubernetes.io/hostname: pve-pod-1
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      terminationGracePeriodSeconds: 60
+      initContainers:
+        - name: verify-data-volume
+          image: docker.io/chrislusf/seaweedfs:4.45@sha256:fc9f76fa993ad69966ffeb2f65d0318fcae39c6f8e20cf68ef7b3a5cb97769e5
+          command:
+            - /bin/sh
+            - -ec
+          args:
+            - |
+              test "$(cat /data/.seaweedfs-volume)" = "seaweedfs-data-v1"
+              capacity_bytes="$(df -B1 /data | tail -n 1 | awk '{print $2}')"
+              test "$capacity_bytes" -ge 510027366400
+              test -s /run/secrets/seaweedfs/s3.json
+              test -s /run/secrets/seaweedfs/admin-user
+              test -s /run/secrets/seaweedfs/admin-password
+              mkdir -p /data/seaweedfs/master /data/seaweedfs/volume /data/seaweedfs/filer /data/seaweedfs/admin
+              test -w /data/seaweedfs
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: auth
+              mountPath: /run/secrets/seaweedfs
+              readOnly: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+      containers:
+        - name: server
+          image: docker.io/chrislusf/seaweedfs:4.45@sha256:fc9f76fa993ad69966ffeb2f65d0318fcae39c6f8e20cf68ef7b3a5cb97769e5
+          args:
+            - server
+            - -ip=127.0.0.1
+            - -ip.bind=127.0.0.1
+            - -dir=/data/seaweedfs/volume
+            - -master.dir=/data/seaweedfs/master
+            - -master.volumeSizeLimitMB=1024
+            - -master.telemetry=false
+            - -volume.max=450
+            - -volume.minFreeSpace=20GiB
+            - -volume.index=leveldb
+            - -filer
+            - -s3
+            - -s3.ip.bind=0.0.0.0
+            - -s3.config=/run/secrets/seaweedfs/s3.json
+            - -s3.port.iceberg=0
+            - -s3.port.lance=0
+            - -s3.iam.readOnly=true
+          env:
+            - name: HOME
+              value: /tmp
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - name: s3
+              containerPort: 8333
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 3Gi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: config
+              mountPath: /etc/seaweedfs
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+            - name: auth
+              mountPath: /run/secrets/seaweedfs
+              readOnly: true
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: s3
+            periodSeconds: 2
+            failureThreshold: 90
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: s3
+            periodSeconds: 5
+            timeoutSeconds: 2
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: s3
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+        - name: admin
+          image: docker.io/chrislusf/seaweedfs:4.45@sha256:fc9f76fa993ad69966ffeb2f65d0318fcae39c6f8e20cf68ef7b3a5cb97769e5
+          args:
+            - admin
+            - -master=127.0.0.1:9333
+            - -dataDir=/data/seaweedfs/admin
+            - -iceberg.port=0
+            - -lance.port=0
+          env:
+            - name: HOME
+              value: /tmp
+            - name: WEED_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: seaweedfs-auth
+                  key: admin-user
+            - name: WEED_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: seaweedfs-auth
+                  key: admin-password
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - name: admin
+              containerPort: 23646
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: config
+              mountPath: /etc/seaweedfs
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+          startupProbe:
+            tcpSocket:
+              port: admin
+            periodSeconds: 2
+            failureThreshold: 90
+          readinessProbe:
+            httpGet:
+              path: /login
+              port: admin
+            periodSeconds: 5
+            timeoutSeconds: 2
+          livenessProbe:
+            httpGet:
+              path: /login
+              port: admin
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+      volumes:
+        - name: config
+          configMap:
+            name: seaweedfs-config
+        - name: auth
+          secret:
+            secretName: seaweedfs-auth
+            defaultMode: 288
+        - name: tmp
+          emptyDir:
+            sizeLimit: 256Mi
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: local-disk
+        volumeName: seaweedfs-data
+        resources:
+          requests:
+            storage: 500Gi

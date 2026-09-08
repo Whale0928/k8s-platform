@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: seaweedfs-config
+data:
+  filer.toml: |
+    [leveldb2]
+    enabled = true
+    dir = "/data/seaweedfs/filer"
+  admin.toml: |
+    [maintenance.vacuum]
+    enabled = false
+    [maintenance.balance]
+    enabled = false
+    [maintenance.erasure_coding]
+    enabled = false
