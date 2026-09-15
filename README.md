@@ -88,7 +88,6 @@ Client -> DNS -> Public IP (Oracle Cloud arm64 nodes)
 | https-bottle-note-root | bottle-note.com | wildcard-bottle-note-tls | Route53 |
 | https-bottle-note | *.bottle-note.com | wildcard-bottle-note-tls | Route53 |
 | https-bottle-note-dev | *.development.bottle-note.com | wildcard-dev-bottle-note-tls | Route53 |
-| https-bottle-note-product | *.product.bottle-note.com | wildcard-product-bottle-note-tls | Route53 |
 | https-dead-whale | *.dead-whale.org | wildcard-dead-whale-tls | Cloudflare |
 | https-kr-filter | *.kr-filter.com | wildcard-kr-filter-tls | Cloudflare |
 | https-profanity-kr-filter | *.profanity.kr-filter.com | wildcard-profanity-kr-filter-tls | Cloudflare |
@@ -97,11 +96,10 @@ Client -> DNS -> Public IP (Oracle Cloud arm64 nodes)
 
 | Service | Domain | Namespace |
 |---------|--------|-----------|
-| Bottlenote API (prod) | api.product.bottle-note.com | bottlenote-production |
 | Bottlenote Admin API (prod) | admin-api.bottle-note.com | bottlenote-production |
 | Bottlenote Admin Dashboard (prod) | admin.bottle-note.com | bottlenote-production |
 | Bottlenote Frontend (prod) | bottle-note.com | bottlenote-production |
-| Bottlenote API (dev) | api.development.bottle-note.com | bottlenote-development |
+| Bottlenote API Docs (dev 스펙) | docs.bottle-note.com | bottlenote-development |
 | Bottlenote Admin API (dev) | admin-api.development.bottle-note.com | bottlenote-development |
 | Bottlenote Admin Dashboard (dev) | admin.development.bottle-note.com | bottlenote-development |
 | Bottlenote Frontend (dev) | development.bottle-note.com | bottlenote-development |

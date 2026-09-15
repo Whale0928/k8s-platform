@@ -34,19 +34,3 @@
     allowedRoutes:
       namespaces:
         from: All
-- op: add
-  path: /spec/listeners/-
-  value:
-    name: https-bottle-note-product
-    protocol: HTTPS
-    port: 443
-    hostname: "*.product.bottle-note.com"
-    tls:
-      mode: Terminate
-      certificateRefs:
-        - group: ""
-          kind: Secret
-          name: wildcard-product-bottle-note-tls
-    allowedRoutes:
-      namespaces:
-        from: All
