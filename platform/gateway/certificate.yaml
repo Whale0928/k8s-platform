@@ -95,18 +95,3 @@ spec:
     kind: ClusterIssuer
   dnsNames:
     - "*.development.bottle-note.com"
-
----
-# *.product.bottle-note.com
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: wildcard-product-bottle-note
-  namespace: envoy-gateway-system
-spec:
-  secretName: wildcard-product-bottle-note-tls
-  issuerRef:
-    name: letsencrypt-dns
-    kind: ClusterIssuer
-  dnsNames:
-    - "*.product.bottle-note.com"
