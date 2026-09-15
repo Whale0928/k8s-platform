@@ -96,11 +96,9 @@ Client -> DNS -> Public IP (Oracle Cloud arm64 nodes)
 
 | Service | Domain | Namespace |
 |---------|--------|-----------|
-| Bottlenote Admin API (prod) | admin-api.bottle-note.com | bottlenote-production |
 | Bottlenote Admin Dashboard (prod) | admin.bottle-note.com | bottlenote-production |
 | Bottlenote Frontend (prod) | bottle-note.com | bottlenote-production |
 | Bottlenote API Docs (dev 스펙) | docs.bottle-note.com | bottlenote-development |
-| Bottlenote Admin API (dev) | admin-api.development.bottle-note.com | bottlenote-development |
 | Bottlenote Admin Dashboard (dev) | admin.development.bottle-note.com | bottlenote-development |
 | Bottlenote Frontend (dev) | development.bottle-note.com | bottlenote-development |
 | Profanity Filter API | api.profanity.kr-filter.com | profanity-production |

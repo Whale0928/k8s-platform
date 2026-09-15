@@ -315,9 +315,9 @@ kubectl get deployment -n bottlenote-production \
 kubectl get pods -n bottlenote-production \
   -o custom-columns='NAME:.metadata.name,READY:.status.containerStatuses[*].ready,RESTARTS:.status.containerStatuses[*].restartCount,IMAGEID:.status.containerStatuses[*].imageID'
 
-# product-api는 공개 도메인이 없으므로 클러스터 내부에서 확인한다
+# product-api, admin-api는 공개 도메인이 없으므로 클러스터 내부 또는 대시보드 프록시 경유로 확인한다
 kubectl exec -n bottlenote-production deploy/frontend -- wget -qO- http://product-api/actuator/health/readiness
-curl -fsS https://admin-api.bottle-note.com/admin/api/actuator/health/readiness
+curl -fsS https://admin.bottle-note.com/admin/api/actuator/health/readiness
 curl -fsS -o /dev/null https://bottle-note.com
 curl -fsS -o /dev/null https://admin.bottle-note.com
 ```
