@@ -65,6 +65,7 @@ spec:
           commonUpdateSettings:
             updateStrategy: "digest"
             allowTags: "regexp:^frontend_latest_preview$"
+            forceUpdate: true
             platforms:
               - "linux/arm64"
           manifestTargets:
@@ -76,6 +77,7 @@ spec:
           commonUpdateSettings:
             updateStrategy: "digest"
             allowTags: "regexp:^dashboard_latest_preview$"
+            forceUpdate: true
             platforms:
               - "linux/arm64"
           manifestTargets:
