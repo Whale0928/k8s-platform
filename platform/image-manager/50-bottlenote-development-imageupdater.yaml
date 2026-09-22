@@ -59,3 +59,25 @@ spec:
           manifestTargets:
             kustomize:
               name: "bottlenote-admin-dashboard"
+
+        - alias: "frontend-preview"
+          imageName: "docker-registry.bottle-note.com/bottlenote-frontend-preview:frontend_latest_preview"
+          commonUpdateSettings:
+            updateStrategy: "digest"
+            allowTags: "regexp:^frontend_latest_preview$"
+            platforms:
+              - "linux/arm64"
+          manifestTargets:
+            kustomize:
+              name: "bottlenote-frontend-preview"
+
+        - alias: "admin-dashboard-preview"
+          imageName: "docker-registry.bottle-note.com/bottlenote-admin-dashboard-preview:dashboard_latest_preview"
+          commonUpdateSettings:
+            updateStrategy: "digest"
+            allowTags: "regexp:^dashboard_latest_preview$"
+            platforms:
+              - "linux/arm64"
+          manifestTargets:
+            kustomize:
+              name: "bottlenote-admin-dashboard-preview"
