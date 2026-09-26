@@ -8,7 +8,7 @@
 # - UI: 웹 대시보드 활성화
 # - CVE 스캔: 24시간 간격으로 trivy DB 업데이트 및 취약점 스캔
 # - Scrub: 24시간 간격으로 데이터 무결성 검사
-# - Trust: cosign + notation 서명 검증 활성화
+# - Trust: 비활성화 (retention 삭제 후 서명 유효성 갱신 작업이 SIGSEGV로 죽는 문제 회피)
 # - Retention Policy: 모든 저장소에서 최근 push 2개와 3일 내 pull된 태그만 보존
 #   latest 채널, cache, Cosign 서명(.sig) 태그는 항상 보존한다
 ---
@@ -93,7 +93,7 @@ data:
           "interval": "24h"
         },
         "trust": {
-          "enable": true,
+          "enable": false,
           "cosign": true,
           "notation": true
         }
