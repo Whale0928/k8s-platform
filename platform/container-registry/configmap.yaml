@@ -9,7 +9,8 @@
 # - CVE 스캔: 24시간 간격으로 trivy DB 업데이트 및 취약점 스캔
 # - Scrub: 24시간 간격으로 데이터 무결성 검사
 # - Trust: cosign + notation 서명 검증 활성화
-# - Retention Policy: Product/Admin 개발 이미지는 최근 5개 보존 (dry-run)
+# - Retention Policy: 모든 저장소에서 최근 push 2개와 30일 내 pull된 태그만 보존 (dry-run)
+#   latest 채널, cache, Cosign 서명(.sig) 태그는 항상 보존한다
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -30,38 +31,17 @@ data:
           "delay": "24h",
           "policies": [
             {
-              "repositories": ["bottlenote-product-api"],
-              "deleteReferrers": true,
-              "deleteUntagged": true,
-              "keepTags": [
-                {
-                  "patterns": ["^product_[0-9a-f]{7}$"],
-                  "mostRecentlyPushedCount": 5
-                },
-                {
-                  "patterns": [".*"]
-                }
-              ]
-            },
-            {
-              "repositories": ["bottlenote-admin-api"],
-              "deleteReferrers": true,
-              "deleteUntagged": true,
-              "keepTags": [
-                {
-                  "patterns": ["^admin_[0-9a-f]{7}$"],
-                  "mostRecentlyPushedCount": 5
-                },
-                {
-                  "patterns": [".*"]
-                }
-              ]
-            },
-            {
               "repositories": ["**"],
+              "deleteReferrers": true,
+              "deleteUntagged": true,
               "keepTags": [
                 {
-                  "patterns": [".*"]
+                  "patterns": [".*latest.*", ".*cache.*", "^sha256-[0-9a-f]{64}\\.sig$"]
+                },
+                {
+                  "patterns": [".*"],
+                  "mostRecentlyPushedCount": 2,
+                  "pulledWithin": "720h"
                 }
               ]
             }
