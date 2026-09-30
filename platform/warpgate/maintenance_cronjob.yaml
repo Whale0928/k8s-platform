@@ -6,8 +6,8 @@ metadata:
 spec:
   schedule: "17 * * * *"
   timeZone: Asia/Seoul
-  # Enable only after the initial backup and cleanup have been reviewed.
-  suspend: true
+  # Initial backup, cleanup and service recovery were verified before enabling.
+  suspend: false
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 2
