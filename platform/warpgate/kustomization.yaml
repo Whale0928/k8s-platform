@@ -9,6 +9,13 @@ resources:
   - pvc.yaml
   - deployment.yaml
   - service.yaml
+  - maintenance_cronjob.yaml
+
+configMapGenerator:
+  - name: warpgate-maintenance
+    namespace: warpgate
+    files:
+      - prune_state.py
 
 generators:
   - ksops-generator.yaml

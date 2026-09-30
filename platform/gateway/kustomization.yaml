@@ -17,6 +17,7 @@ configMapGenerator:
     namespace: envoy-gateway-system
     files:
       - haproxy.cfg
+      - blocked_ips.lst
 
 patches:
   # Envoy Gateway 컨트롤러 → arm64 노드 배치
