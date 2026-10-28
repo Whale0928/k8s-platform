@@ -10,7 +10,7 @@ warp-tech/warpgate 기반 중앙 접근 관제. 인증 + 타겟 화이트리스�
 |----------|------|---------|-----------------|
 | 웹 UI | warpgate.dead-whale.org:443 | SNI 분기 | 8888 |
 | PostgreSQL | warpgate.dead-whale.org:5432 | postgres-tcp | 55432 |
-| SSH | warpgate.dead-whale.org:2222 | ssh-tcp | 2222 |
+| SSH | 공개 종료 (2026.10.28) | 없음 | 2222 (Pod 내부에서만 수신) |
 
 PostgreSQL 접속 형식 (TLS 필수):
 
@@ -41,4 +41,6 @@ postgresql://<유저>#<타겟명>:<비밀번호>@warpgate.dead-whale.org:5432/<d
 - **Warpgate가 지원하지 않는 DB**(ClickHouse, Redis 등)는 호환 포트로 우회한다.
   ClickHouse는 PostgreSQL 호환 포트 9005를 열어 Postgres 타겟으로 등록했다.
   상세는 Documents/sync/프로젝트/Warpgate 중앙 접근 관제/Warpgate 운영 가이드.
-- OCI 방화벽(서브넷 Security List)에서 5432/2222 개방 여부가 외부 접근을 최종 결정한다.
+- OCI 방화벽(서브넷 Security List)에서 5432 개방 여부가 외부 접근을 최종 결정한다.
+  SSH 2222는 등록된 SSH 타겟이 없어 2026.10.28 HAProxy와 Service에서 제거했다. 다시 열려면
+  SSH 타겟 등록과 함께 haproxy.cfg frontend, Service 포트, OCI 규칙을 복원한다.

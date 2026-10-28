@@ -14,10 +14,6 @@ spec:
       port: 8888
       targetPort: http
       protocol: TCP
-    - name: ssh
-      port: 2222
-      targetPort: ssh
-      protocol: TCP
     - name: pgsql
       port: 55432
       targetPort: pgsql

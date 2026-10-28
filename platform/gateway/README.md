@@ -19,7 +19,7 @@ Envoy Gateway가 TLS 종료와 Gateway API(HTTPRoute) 라우팅을 처리한다.
 | gatewayclass.yaml | GatewayClass 정의 |
 | envoyproxy.yaml | EnvoyProxy 설정 (arm64 노드 배치 등) |
 | haproxy-daemonset.yaml | 공개 노드에 배치하는 HAProxy DaemonSet |
-| haproxy.cfg | TCP passthrough 및 PROXY Protocol v2 설정 |
+| haproxy.cfg | TCP passthrough, PROXY Protocol v2, 고정 IP 차단 및 Warpgate 포트 연결 빈도 자동 차단 설정 |
 | client-traffic-policy.yaml | PROXY Protocol 수신 및 XFF 정제 정책 |
 | certificate.yaml | 와일드카드 인증서 (DNS-01) |
 | kustomization.yaml | Kustomize 구성 |
