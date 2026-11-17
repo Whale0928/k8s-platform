@@ -24,6 +24,14 @@ configMapGenerator:
       - blocked_ips.lst
 
 patches:
+  # 기존 legacy CRD는 정의와 버전이 같은 UPDATE만 허용한다.
+  # JSON test가 upstream 검증식 변경을 감지하므로 path 파일 그대로 사용한다.
+  - target:
+      group: admissionregistration.k8s.io
+      version: v1
+      kind: ValidatingAdmissionPolicy
+      name: safe-upgrades.gateway.networking.k8s.io
+    path: safe upgrades legacy patch.json
   # Envoy Gateway 컨트롤러 → arm64 노드 배치
   - target:
       kind: Deployment
