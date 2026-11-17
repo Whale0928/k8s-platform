@@ -2,10 +2,12 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  # Envoy Gateway v1.7.5 (Gateway API CRDs 포함)
-  - https://github.com/envoyproxy/gateway/releases/download/v1.7.5/install.yaml
+  # Envoy Gateway v1.8.6 (Gateway API CRDs 포함)
+  - https://github.com/envoyproxy/gateway/releases/download/v1.8.6/install.yaml
   # v1.3.3 공식 정의를 보존해 기존 CRD의 prune을 막는다.
   - legacy backend lb policy.json
+  # v1.7.5 공식 정의를 보존해 기존 XListenerSet CRD를 유지한다.
+  - legacy x listener set.json
   # Custom resources
   - client-traffic-policy.yaml
   - envoyproxy.yaml
