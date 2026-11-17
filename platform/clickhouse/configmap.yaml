@@ -43,7 +43,7 @@ data:
         <!-- Warpgate 연결의 전제. 이 포트가 없으면 외부 접속 경로가 없다 -->
         <postgresql_port>9005</postgresql_port>
 
-        <!-- 컨테이너 limit(4Gi) 기준으로 서버가 쓸 상한 -->
+        <!-- 컨테이너 limit(12Gi) 기준으로 서버가 쓸 상한은 약 8.4GiB -->
         <max_server_memory_usage_to_ram_ratio>0.7</max_server_memory_usage_to_ram_ratio>
         <mark_cache_size>268435456</mark_cache_size>
 
@@ -94,10 +94,10 @@ data:
         <profiles>
             <default>
                 <!-- 쿼리 하나가 서버 전체를 먹지 못하게 하는 상한 -->
-                <max_memory_usage>4294967296</max_memory_usage>
+                <max_memory_usage>6442450944</max_memory_usage>
                 <!-- 이 값을 넘으면 디스크로 흘려보낸다 (상한의 절반) -->
-                <max_bytes_before_external_group_by>2147483648</max_bytes_before_external_group_by>
-                <max_bytes_before_external_sort>2147483648</max_bytes_before_external_sort>
+                <max_bytes_before_external_group_by>3221225472</max_bytes_before_external_group_by>
+                <max_bytes_before_external_sort>3221225472</max_bytes_before_external_sort>
             </default>
         </profiles>
     </clickhouse>
