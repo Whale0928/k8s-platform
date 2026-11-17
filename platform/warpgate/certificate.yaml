@@ -7,6 +7,9 @@ metadata:
   name: warpgate-tls
   namespace: warpgate
 spec:
+  # 기존 인증서의 키 교체 정책을 cert-manager 업그레이드 후에도 유지한다.
+  privateKey:
+    rotationPolicy: Never
   secretName: warpgate-tls
   issuerRef:
     name: letsencrypt-dns

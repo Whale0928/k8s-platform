@@ -10,6 +10,9 @@ metadata:
   name: wildcard-cheese-lake
   namespace: envoy-gateway-system
 spec:
+  # 기존 인증서의 키 교체 정책을 cert-manager 업그레이드 후에도 유지한다.
+  privateKey:
+    rotationPolicy: Never
   secretName: wildcard-cheese-lake-tls
   issuerRef:
     name: letsencrypt-dns
@@ -26,6 +29,9 @@ metadata:
   name: wildcard-dead-whale
   namespace: envoy-gateway-system
 spec:
+  # 기존 인증서의 키 교체 정책을 cert-manager 업그레이드 후에도 유지한다.
+  privateKey:
+    rotationPolicy: Never
   secretName: wildcard-dead-whale-tls
   issuerRef:
     name: letsencrypt-dns
@@ -42,6 +48,9 @@ metadata:
   name: wildcard-kr-filter
   namespace: envoy-gateway-system
 spec:
+  # 기존 인증서의 키 교체 정책을 cert-manager 업그레이드 후에도 유지한다.
+  privateKey:
+    rotationPolicy: Never
   secretName: wildcard-kr-filter-tls
   issuerRef:
     name: letsencrypt-dns
@@ -58,6 +67,9 @@ metadata:
   name: wildcard-profanity-kr-filter
   namespace: envoy-gateway-system
 spec:
+  # 기존 인증서의 키 교체 정책을 cert-manager 업그레이드 후에도 유지한다.
+  privateKey:
+    rotationPolicy: Never
   secretName: wildcard-profanity-kr-filter-tls
   issuerRef:
     name: letsencrypt-dns
@@ -73,6 +85,9 @@ metadata:
   name: wildcard-bottle-note
   namespace: envoy-gateway-system
 spec:
+  # 기존 인증서의 키 교체 정책을 cert-manager 업그레이드 후에도 유지한다.
+  privateKey:
+    rotationPolicy: Never
   secretName: wildcard-bottle-note-tls
   issuerRef:
     name: letsencrypt-dns
@@ -89,6 +104,9 @@ metadata:
   name: wildcard-dev-bottle-note
   namespace: envoy-gateway-system
 spec:
+  # 기존 인증서의 키 교체 정책을 cert-manager 업그레이드 후에도 유지한다.
+  privateKey:
+    rotationPolicy: Never
   secretName: wildcard-dev-bottle-note-tls
   issuerRef:
     name: letsencrypt-dns
