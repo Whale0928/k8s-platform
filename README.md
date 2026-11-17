@@ -4,28 +4,16 @@ Personal Kubernetes platform infrastructure for all projects.
 
 ## Cluster Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     K3s Cluster (Tailscale VPN)                 │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│   ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
-│   │ instance-node-1 │  │ instance-node-2 │  │ instance-node-3 │ │
-│   │   Oracle Cloud  │  │   Oracle Cloud  │  │   Oracle Cloud  │ │
-│   │ control-plane   │  │ control-plane   │  │ control-plane   │ │
-│   │     arm64       │  │     arm64       │  │     arm64       │ │
-│   │   Public IP     │  │   Public IP     │  │   Public IP     │ │
-│   └─────────────────┘  └─────────────────┘  └─────────────────┘ │
-│                                                                 │
-│   ┌─────────────────┐  ┌─────────────────┐                      │
-│   │    pve-pod-1    │  │    pve-pod-2    │                      │
-│   │ Proxmox Homelab │  │ Proxmox Homelab │                      │
-│   │     worker      │  │     worker      │                      │
-│   │     amd64       │  │     amd64       │                      │
-│   │ Tailscale Only  │  │ Tailscale Only  │                      │
-│   └─────────────────┘  └─────────────────┘                      │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
+```text
+K3s Cluster (Tailscale VPN)
+├── Control plane / etcd (Oracle Cloud, arm64)
+│   ├── instance-node-1
+│   ├── instance-node-2
+│   ├── instance-node-3
+│   └── instance-node-4
+└── Workers (Proxmox Homelab, amd64)
+    ├── pve-pod-1
+    └── pve-pod-2
 ```
 
 ## Components
@@ -47,9 +35,8 @@ Personal Kubernetes platform infrastructure for all projects.
 ### Redis Operator 참고사항
 
 - **Opstree redis-operator v0.24.0** 기반, CRD: `RedisReplication`, `RedisCluster`, `RedisSentinel`
-- 현재 bottlenote-development에 `RedisReplication` (master 1 + replica 2) 구성
-- **Sentinel 미적용 상태**: Master Pod 장애 시 StatefulSet이 Pod를 재생성하지만 자동 failover(Replica 승격)는 되지 않음. 쓰기 불가 시간이 발생할 수 있음
-- 자동 failover가 필요하면 `RedisSentinel` CRD를 추가 배포해야 함
+- bottlenote-development에 `RedisReplication` (master 1 + replica 2)과 Sentinel 3개를 배포했다.
+- 2026.11.17 점검에서 Sentinel 3곳의 `CKQUORUM`과 Redis 복제 링크가 정상임을 확인했다. 실제 master 장애와 자동 승격 시나리오는 시험하지 않았다.
 
 ## Structure
 
@@ -131,7 +118,9 @@ kubectl apply -k apps/
 
 ## New Node Setup (Homelab)
 
-Tailscale VPN 환경에서 새 노드 추가 시 필수 설정:
+Tailscale VPN 환경에서 새 노드 추가 시 설정한다. 아래 예시는 설정 파일이 없는 신규 노드 전용이다. 기존 노드에서는 `config.yaml`을 덮어쓰거나 netfilter 모드를 일괄 변경하지 않는다. pve-pod-1처럼 인터페이스에서 IPv4·IPv6를 자동 선택하는 노드에 IPv4 전용 `node-ip`를 추가하지 않는다.
+
+[K3s 업그레이드 경로와 네트워크 보존 사항](<docs/2026.11.17 K3s 업그레이드 기록.md>)을 확인한다. 신규 agent 설치 버전은 `v1.36.6+k3s1`로 고정한다.
 
 ```bash
 # 1. config.yaml 생성
@@ -143,7 +132,7 @@ sudo tailscale set --netfilter-mode=nodivert
 
 # 3. k3s-agent 설치 (Tailscale IP 사용)
 curl -sfL https://get.k3s.io | K3S_URL=https://<server>:6443 K3S_TOKEN=<token> \
-  INSTALL_K3S_EXEC="agent --node-ip=<tailscale-ip>" sh -
+  INSTALL_K3S_VERSION="v1.36.6+k3s1" INSTALL_K3S_EXEC="agent --node-ip=<tailscale-ip>" sh -
 ```
 
 ## Managed Projects
