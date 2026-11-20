@@ -16,27 +16,17 @@ spec:
   applicationRefs:
     - namePattern: "bottlenote-development"
       images:
-        - alias: "product-api"
-          imageName: "docker-registry.bottle-note.com/bottlenote-product-api:product_latest_development"
+        # 통합 API: 개발 overlay가 처음부터 이 이미지 이름으로 배포하므로 forceUpdate가 필요 없다
+        - alias: "api"
+          imageName: "docker-registry.bottle-note.com/bottlenote-api:api_latest_development"
           commonUpdateSettings:
             updateStrategy: "digest"
-            allowTags: "regexp:^product_latest_development$"
+            allowTags: "regexp:^api_latest_development$"
             platforms:
               - "linux/arm64"
           manifestTargets:
             kustomize:
-              name: "bottlenote-product-api"
-
-        - alias: "admin-api"
-          imageName: "docker-registry.bottle-note.com/bottlenote-admin-api:admin_latest_development"
-          commonUpdateSettings:
-            updateStrategy: "digest"
-            allowTags: "regexp:^admin_latest_development$"
-            platforms:
-              - "linux/arm64"
-          manifestTargets:
-            kustomize:
-              name: "bottlenote-admin-api"
+              name: "bottlenote-api"
 
         - alias: "frontend"
           imageName: "docker-registry.bottle-note.com/bottlenote-frontend:frontend_latest_development"
@@ -59,27 +49,3 @@ spec:
           manifestTargets:
             kustomize:
               name: "bottlenote-admin-dashboard"
-
-        - alias: "frontend-preview"
-          imageName: "docker-registry.bottle-note.com/bottlenote-frontend-preview:frontend_latest_preview"
-          commonUpdateSettings:
-            updateStrategy: "digest"
-            allowTags: "regexp:^frontend_latest_preview$"
-            forceUpdate: true
-            platforms:
-              - "linux/arm64"
-          manifestTargets:
-            kustomize:
-              name: "bottlenote-frontend-preview"
-
-        - alias: "admin-dashboard-preview"
-          imageName: "docker-registry.bottle-note.com/bottlenote-admin-dashboard-preview:dashboard_latest_preview"
-          commonUpdateSettings:
-            updateStrategy: "digest"
-            allowTags: "regexp:^dashboard_latest_preview$"
-            forceUpdate: true
-            platforms:
-              - "linux/arm64"
-          manifestTargets:
-            kustomize:
-              name: "bottlenote-admin-dashboard-preview"
