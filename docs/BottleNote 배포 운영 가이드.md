@@ -30,7 +30,7 @@
 | Zot Registry | 이미지 태그, OCI index digest, Cosign signature 저장 | `docker-registry.bottle-note.com` |
 | Argo CD | `environment-variables/main`을 클러스터에 자동 동기화 | `bottlenote-development`, `bottlenote-production` Application |
 
-`product-api`, `admin-api`, `frontend`, `admin-dashboard`는 Image Updater의 digest write-back 대상이다. `batch`는 이 경로에 포함되지 않으며 `deploy_batch.yml`의 명시적 버전과 GitOps 갱신을 사용한다. 운영 Batch는 GitHub Environment를 사용하지만 현재 reviewer 승인 규칙은 없으며, Environment 사용 자체가 별도 승인 gate를 뜻하지 않는다.
+Image Updater의 digest write-back 대상은 운영에서 `product-api`, `admin-api`, `frontend`, `admin-dashboard`이고, 개발에서 `api`, `frontend`, `admin-dashboard`다(4.3절). `batch`는 이 경로에 포함되지 않으며 `deploy_batch.yml`의 명시적 버전과 GitOps 갱신을 사용한다. 운영 Batch는 GitHub Environment를 사용하지만 현재 reviewer 승인 규칙은 없으며, Environment 사용 자체가 별도 승인 gate를 뜻하지 않는다.
 
 ## 3. 현재 배포 구조
 
@@ -85,6 +85,15 @@ Dashboard의 `ci` job은 dependency 설치와 `pnpm build`를 실행한다. lint
 ### 4.2 수동 dispatch 주의
 
 세 저장소의 개발 workflow에는 `workflow_dispatch`도 열려 있으며 dispatch한 ref의 `github.sha`를 배포한다. 현재 수동 실행 ref가 `main`인지 강제하는 공통 gate는 없다. 운영자는 특별한 검증 목적이 아니라면 반드시 `main`에서 실행하고, 다른 ref를 사용했다면 저장소, ref와 full SHA를 결과에 남긴다.
+
+### 4.3 개발 통합 API (2026.11.20, bottle-note/workspace#564)
+
+Backend는 Product 앱에 Admin API를 흡수한 통합 앱을 개발 환경에서 먼저 운영한다. 운영은 이 절과 무관하게 `product-api`, `admin-api` 두 단위를 유지한다.
+
+- Backend 개발 workflow는 `bottlenote-api` 이미지 하나만 발행한다. 감사용 태그는 `api_<short SHA>`, 채널 태그는 `api_latest_development`다.
+- `environment-variables`의 개발 overlay는 Deployment·Service `api`만 띄운다. `product-api`, `admin-api` Service는 셀렉터를 `app: api`로 바꿔 두었으므로 frontend(`http://product-api`)와 admin-dashboard(`http://admin-api`)는 호출 주소를 바꾸지 않고 통합 앱으로 간다. 개발 `product-api`, `admin-api` Deployment는 제거했다.
+- 개발 ImageUpdater CR의 alias `api`가 `api_latest_development`의 digest를 `bottlenote-api` 항목에 기록한다. 개발 overlay가 같은 이미지 이름을 배포하므로 `forceUpdate`를 쓰지 않는다. Image Updater v1.0.2는 Application의 live 이미지 목록에 같은 registry·이미지 이름이 있을 때만 갱신하고, `forceUpdate`는 그 확인을 건너뛰게 한다.
+- 개발 `product-api`, `admin-api` alias와 Preview alias(`frontend-preview`, `admin-dashboard-preview`)는 제거했다. Preview 런타임은 개발 overlay에서 내렸고 이후 다른 방식으로 다시 구성한다. `forceUpdate`가 켜진 Preview alias를 남겨 두면 지운 이미지 항목을 kustomization에 다시 기록하므로 런타임과 함께 지운다.
 
 ## 5. 운영 Release PR
 
