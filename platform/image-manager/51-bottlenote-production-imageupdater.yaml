@@ -16,27 +16,17 @@ spec:
   applicationRefs:
     - namePattern: "bottlenote-production"
       images:
-        - alias: "product-api"
-          imageName: "docker-registry.bottle-note.com/bottlenote-product-api:product_latest_production"
+        # 운영 백엔드는 통합 api 하나다. product-api·admin-api 이미지는 더 발행하지 않는다.
+        - alias: "api"
+          imageName: "docker-registry.bottle-note.com/bottlenote-api:api_latest_production"
           commonUpdateSettings:
             updateStrategy: "digest"
-            allowTags: "regexp:^product_latest_production$"
+            allowTags: "regexp:^api_latest_production$"
             platforms:
               - "linux/arm64"
           manifestTargets:
             kustomize:
-              name: "bottlenote-product-api"
-
-        - alias: "admin-api"
-          imageName: "docker-registry.bottle-note.com/bottlenote-admin-api:admin_latest_production"
-          commonUpdateSettings:
-            updateStrategy: "digest"
-            allowTags: "regexp:^admin_latest_production$"
-            platforms:
-              - "linux/arm64"
-          manifestTargets:
-            kustomize:
-              name: "bottlenote-admin-api"
+              name: "bottlenote-api"
 
         - alias: "frontend"
           imageName: "docker-registry.bottle-note.com/bottlenote-frontend:frontend_latest_production"
